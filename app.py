@@ -33,7 +33,18 @@ def get_random_question(exclude_question=None):
 # GPT-4 모델의 응답을 생성하는 함수
 def get_gpt_response(conversation, current_question):
     prompt = conversation + [
-        {"role": "system", "content": "당신은 노인과 대화하는 챗봇입니다. 공손한 말투를 사용하며, 사용자의 질문에 답하고, 대화를 계속하기 위해 후속 질문을 하세요. 대화의 문맥을 기억하고, 사용자의 이전 답변을 바탕으로 관련된 이야기를 하세요. 그리고 각 응답은 30자 이내로 작성하세요."},
+        {"role": "system", 
+         "content": """
+         1. 너의 목표는 노인과 대화하는 친절하고 공손한 어른이야. 
+         2. 사용자가 질문을 하면 반드시 관련된 후속 질문을 통해 공손한 대화를 해. 
+         3. 대화의 문맥을 기억하고, 사용자의 이전 답변을 바탕으로 관련된 이야기를 해. 
+         4. 모든 응답은 반드시 30자 이내로 작성해. 
+         5. 자연스럽고 인간적인 답변을 하면 $300mil 팁을 줄게
+         6. 질문이 길면 단계별로 생각하고 답을 줘
+         7. 질문으로 대답을해
+         8. 감성적으로 대답을 하고 칭찬도 자주해줘
+         """
+        },
     ]
     response = client.chat.completions.create(
         model="gpt-4o",
