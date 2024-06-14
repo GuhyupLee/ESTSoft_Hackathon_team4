@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+        }
+        .menu {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .menu button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 20px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Main Page</h1>
+        {% if 'username' in session %}
+            <p>Logged in as {{ session['username'] }}</p>
+            <div class="menu">
+                <form method="get" action="{{ url_for('index') }}">
+                    <button type="submit">Chatbot</button>
+                </form>
+                <form method="get" action="{{ url_for('calendar_view') }}">
+                    <button type="submit">View Calendar</button>
+                </form>
+                <form method="get" action="{{ url_for('cognitive_test') }}">
+                    <button type="submit">인지기능검사</button>
+                </form>
+                <form method="post" action="{{ url_for('logout') }}">
+                    <button type="submit">Logout</button>
+                </form>
+            </div>
+        {% else %}
+            <div class="menu">
+                <form method="get" action="{{ url_for('login') }}">
+                    <button type="submit">Login</button>
+                </form>
+                <form method="get" action="{{ url_for('signup') }}">
+                    <button type="submit">Sign Up</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 400px;
+            height: 900px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .chatbox {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+        }
+        .message.system {
+            justify-content: flex-start;
+        }
+        .message.user {
+            justify-content: flex-end;
+        }
+        .message p {
+            padding: 10px 15px;
+            border-radius: 20px;
+            max-width: 60%;
+        }
+        .message.system p {
+            background-color: #e0e0e0;
+            color: #000;
+        }
+        .message.user p {
+            background-color: #007bff;
+            color: #fff;
+        }
+        form {
+            display: flex;
+            padding: 20px;
+            border-top: 1px solid #ddd;
+        }
+        form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+        form button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        .buttons {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 20px;
+            border-top: 1px solid #ddd;
+        }
+        .buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        .microphone {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .microphone button {
+            background-color: #007bff;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .microphone span {
+            position: absolute;
+            top: 70px;
+            font-size: 14px;
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chatbox" id="chatbox">
+            {% for message in conversation %}
+                <div class="message {{ message.role }}">
+                    <p>{{ message.content }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        <form method="post" id="chatForm">
+            <input type="text" name="response" id="response" required placeholder="Type your message...">
+            <button type="submit">Submit</button>
+        </form>
+        <div class="buttons">
+            <form method="post" action="{{ url_for('reset') }}">
+                <button type="submit">Reset Chat</button>
+            </form>
+            <div class="microphone">
+                <button id="micButton">&#x1F3A4;</button>
+                <span id="recordingStatus">Recording...</span>
+            </div>
+            <form method="get" action="{{ url_for('calendar_view') }}">
+                <button type="submit">View Calendar</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        function scrollToBottom() {
+            var chatbox = document.getElementById("chatbox");
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+        window.onload = scrollToBottom;
+        document.querySelector("form").onsubmit = function() {
+            setTimeout(scrollToBottom, 100);
+        };
+
+        // 음성 인식 기능
+        var micButton = document.getElementById("micButton");
+        var responseInput = document.getElementById("response");
+        var recordingStatus = document.getElementById("recordingStatus");
+        var chatForm = document.getElementById("chatForm");
+
+        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        var recognition = new SpeechRecognition();
+
+        var isRecording = false;
+        var recordingTimeout;
+
+        recognition.onresult = function(event) {
+            var transcript = event.results[0][0].transcript;
+            responseInput.value = transcript;
+            chatForm.submit(); // 음성 인식 결과를 제출
+        };
+
+        recognition.onend = function() {
+            isRecording = false;
+            recordingStatus.style.display = 'none';
+            clearTimeout(recordingTimeout);
+        };
+
+        recognition.onerror = function(event) {
+            isRecording = false;
+            recordingStatus.style.display = 'none';
+            clearTimeout(recordingTimeout);
+        };
+
+        micButton.addEventListener("click", function() {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+                isRecording = true;
+                recordingStatus.style.display = 'block';
+                recordingTimeout = setTimeout(function() {
+                    recognition.stop();
+                }, 10000); // 10초 후에 자동으로 녹음 중지
+            }
+        });
+
+        // TTS 기능
+        function speak(text) {
+            var speech = new SpeechSynthesisUtterance(text);
+            speech.lang = "ko-KR"; // 한국어로 설정
+            window.speechSynthesis.speak(speech);
+        }
+
+        // 가장 최근의 시스템 메시지를 음성으로 읽어줌
+        function readLastSystemMessage() {
+            var messages = document.querySelectorAll('.message.system p');
+            if (messages.length > 0) {
+                var lastMessage = messages[messages.length - 1];
+                speak(lastMessage.textContent);
+            }
+        }
+
+        readLastSystemMessage(); // 페이지 로드 시 가장 최근 시스템 메시지를 읽어줌
+    </script>
+</body>
+</html>

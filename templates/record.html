@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ date }} 일기</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            max-width: 600px;
+        }
+        .record-entry {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        .question-header {
+            margin: 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .record-content {
+            display: none;
+            margin-top: 10px;
+        }
+        .record-content p {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ date }} 일기</h1>
+    <ul id="record-list"></ul>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const records = [
+                {% for record in records %}
+                    {
+                        question: "{{ record['Question']|e }}",
+                        response: "{{ record['Response']|e }}",
+                        gptResponse: "{{ record['GPT_Question']|e }}"
+                    }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+            const recordList = document.getElementById('record-list');
+            let currentQuestion = null;
+            let currentBlock = null;
+
+            records.forEach(record => {
+                const question = record.question;
+
+                if (currentQuestion !== question) {
+                    currentQuestion = question;
+                    currentBlock = document.createElement('li');
+                    currentBlock.className = 'record-entry';
+
+                    const questionHeader = document.createElement('h3');
+                    questionHeader.className = 'question-header';
+                    questionHeader.textContent = `시작 질문: ${question}`;
+                    questionHeader.addEventListener('click', () => {
+                        const content = questionHeader.nextElementSibling;
+                        if (content.style.display === 'none' || content.style.display === '') {
+                            content.style.display = 'block';
+                        } else {
+                            content.style.display = 'none';
+                        }
+                    });
+
+                    const recordContent = document.createElement('div');
+                    recordContent.className = 'record-content';
+
+                    currentBlock.appendChild(questionHeader);
+                    currentBlock.appendChild(recordContent);
+                    recordList.appendChild(currentBlock);
+                }
+
+                const recordContent = currentBlock.querySelector('.record-content');
+
+                const userResponse = document.createElement('p');
+                userResponse.innerHTML = `<strong>A:</strong> ${record.response}`;
+
+                const gptResponse = document.createElement('p');
+                gptResponse.innerHTML = `<strong>GPT:</strong> ${record.gptResponse}`;
+
+                recordContent.appendChild(userResponse);
+                recordContent.appendChild(gptResponse);
+            });
+        });
+    </script>
+</body>
+</html>
