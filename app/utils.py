@@ -71,9 +71,6 @@ def save_response(user, date, question, gpt_question, response):
     df = pd.DataFrame([[user, date, question, gpt_question, response]], columns=['User', 'Date', 'Question', 'GPT_Question', 'Response'])
     df.to_csv(file_path, mode='a', header=not os.path.exists(file_path), index=False, encoding='utf-8-sig')
 
-def contains_question(text):
-    return '?' in text
-
 def save_user(username, password, age):
     user_dir = os.path.join(base_dir, 'app', 'users')
     os.makedirs(user_dir, exist_ok=True)
@@ -111,3 +108,7 @@ def load_conversation(username):
 def get_all_dates_in_month(year, month):
     num_days = calendar.monthrange(year, month)[1]
     return [date(year, month, day).strftime('%Y-%m-%d') for day in range(1, num_days + 1)]
+
+
+def contains_question(text):
+    return '?' in text
