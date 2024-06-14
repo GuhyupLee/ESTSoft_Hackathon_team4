@@ -42,7 +42,7 @@
         {% if 'username' in session %}
             <p>Logged in as {{ session['username'] }}</p>
             <div class="menu">
-                <form method="get" action="{{ url_for('main.index') }}">
+                <form method="get" action="{{ url_for('main.chat') }}">
                     <button type="submit">Chatbot</button>
                 </form>
                 <form method="get" action="{{ url_for('main.calendar_view') }}">

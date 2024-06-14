@@ -53,7 +53,7 @@
     <div class="container">
         <h1>Cognitive Test</h1>
         <form method="post" action="{{ url_for('main.cognitive_test') }}">
-            <label for="question">{{ question['Date'] }}: {{ question['Question'] }}</label>
+            <label for="question">{{ question['Question'] }}</label>
             <input type="text" name="answer" required placeholder="Answer">
             <button type="submit">Submit</button>
         </form>

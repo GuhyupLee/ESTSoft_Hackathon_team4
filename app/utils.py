@@ -7,11 +7,12 @@ import calendar
 import openai
 from dotenv import load_dotenv
 
+
 load_dotenv()  # .env 파일을 로드합니다.
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-base_dir = os.path.abspath(os.path.dirname(__file__))  # 현재 파일의 절대 경로
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 questions = [
     "오늘은 무슨 일이 있었나요",
@@ -47,36 +48,43 @@ def get_gpt_response(conversation, current_question):
     )
     return response.choices[0].message.content
 
+
+def summarize_responses(responses):
+    prompt = "다음은 사용자의 응답 목록입니다. 이 응답들을 요약하여 일기 형태로 작성하세요:\n\n"
+    for response in responses:
+        prompt += f"- {response}\n"
+    
+    prompt += "\n요약된 일기:"
+    client = openai.OpenAI()
+    response = client.chat.completions.create(
+        model="gpt-4o",  
+        messages=[{"role": "system", "content": prompt}]
+    )
+    
+    summary = response.choices[0].message.content
+    return summary
+
 def save_response(user, date, question, gpt_question, response):
-    data_path = os.path.join(base_dir, 'data', 'responses.csv')
-    if not os.path.exists(os.path.dirname(data_path)):
-        os.makedirs(os.path.dirname(data_path))
+    data_dir = os.path.join(base_dir, 'app', 'data')
+    os.makedirs(data_dir, exist_ok=True)
+    file_path = os.path.join(data_dir, 'responses.csv')
     df = pd.DataFrame([[user, date, question, gpt_question, response]], columns=['User', 'Date', 'Question', 'GPT_Question', 'Response'])
-    df.to_csv(data_path, mode='a', header=not os.path.exists(data_path), index=False, encoding='utf-8-sig')
+    df.to_csv(file_path, mode='a', header=not os.path.exists(file_path), index=False, encoding='utf-8-sig')
 
 def contains_question(text):
     return '?' in text
 
 def save_user(username, password, age):
-    users_path = os.path.join(base_dir, 'users', 'users.csv')
-    hashed_password = generate_password_hash(password)
-    new_user = pd.DataFrame([[username, hashed_password, age]], columns=['Username', 'Password', 'Age'])
-
-    if not os.path.exists(os.path.dirname(users_path)):
-        os.makedirs(os.path.dirname(users_path))
-
-    if os.path.exists(users_path):
-        users = pd.read_csv(users_path, encoding='utf-8-sig')
-        users = pd.concat([users, new_user], ignore_index=True)
-    else:
-        users = new_user
-
-    users.to_csv(users_path, mode='w', index=False, encoding='utf-8-sig', columns=['Username', 'Password', 'Age'])
+    user_dir = os.path.join(base_dir, 'app', 'users')
+    os.makedirs(user_dir, exist_ok=True)
+    file_path = os.path.join(user_dir, 'users.csv')
+    df = pd.DataFrame([[username, generate_password_hash(password), age]], columns=['Username', 'Password', 'Age'])
+    df.to_csv(file_path, mode='a', header=not os.path.exists(file_path), index=False, encoding='utf-8-sig')
 
 def load_users():
-    users_path = os.path.join(base_dir, 'users', 'users.csv')
-    if os.path.exists(users_path):
-        df = pd.read_csv(users_path, encoding='utf-8-sig')
+    file_path = os.path.join(base_dir, 'app', 'users', 'users.csv')
+    if os.path.exists(file_path):
+        df = pd.read_csv(file_path, encoding='utf-8-sig')
         return df.to_dict(orient='records')
     return []
 
@@ -88,9 +96,9 @@ def verify_user(username, password):
     return False
 
 def load_conversation(username):
-    data_path = os.path.join(base_dir, 'data', 'responses.csv')
-    if os.path.exists(data_path):
-        df = pd.read_csv(data_path, encoding='utf-8-sig')
+    file_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
+    if os.path.exists(file_path):
+        df = pd.read_csv(file_path, encoding='utf-8-sig')
         user_records = df[df['User'] == username].to_dict(orient='records')
         conversation = []
         for record in user_records:

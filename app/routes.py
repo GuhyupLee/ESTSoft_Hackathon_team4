@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from datetime import datetime
 import pandas as pd
 import os
-from datetime import datetime
-from .utils import get_random_question, get_gpt_response, save_response, contains_question, save_user, load_users, verify_user, load_conversation, get_all_dates_in_month, base_dir
+import openai
+from .utils import get_random_question, get_gpt_response, save_response, contains_question, save_user, load_users, verify_user, load_conversation, get_all_dates_in_month, summarize_responses, base_dir
 
 main_bp = Blueprint('main', __name__)
 
@@ -35,8 +36,7 @@ def signup():
     return render_template('signup.html')
 
 @main_bp.route('/chat', methods=['GET', 'POST'])
-@main_bp.route('/chat', methods=['GET', 'POST'])
-def index():
+def chat():
     if 'username' not in session:
         return redirect(url_for('main.login'))
 
@@ -84,13 +84,12 @@ def index():
 
     return render_template('chatbot.html', conversation=session['conversation'])
 
-
 @main_bp.route('/reset', methods=['POST'])
 def reset():
     session.pop('conversation', None)
     session.pop('current_question', None)
     session.pop('last_interaction_date', None)
-    return redirect(url_for('main.index'))
+    return redirect(url_for('main.chat'))
 
 @main_bp.route('/logout', methods=['POST'])
 def logout():
@@ -108,7 +107,7 @@ def cognitive_test():
     if 'cognitive_test_index' not in session:
         session['cognitive_test_index'] = 0
 
-    data_path = os.path.join(base_dir, 'data', 'responses.csv')
+    data_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
     df = pd.read_csv(data_path, encoding='utf-8-sig')
     user_data = df[df['User'] == session['username']]
 
@@ -149,7 +148,7 @@ def calendar_view(year, month):
 
     current_month_dates = get_all_dates_in_month(year, month)
     
-    data_path = os.path.join(base_dir, 'data', 'responses.csv')
+    data_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
     if os.path.exists(data_path):
         df = pd.read_csv(data_path, encoding='utf-8-sig')
         recorded_dates = df[df['User'] == session['username']]['Date'].unique().tolist()
@@ -172,9 +171,11 @@ def record(date):
     if 'username' not in session:
         return redirect(url_for('main.login'))
 
-    data_path = os.path.join(base_dir, 'data', 'responses.csv')
-    if os.path.exists(data_path):
-        df = pd.read_csv(data_path, encoding='utf-8-sig')
-        records = df[(df['Date'] == date) & (df['User'] == session['username'])].to_dict(orient='records')
-        return render_template('record.html', records=records, date=date)
-    return render_template('record.html', records=[], date=date)
+    data_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
+    df = pd.read_csv(data_path, encoding='utf-8-sig')
+    user_records = df[(df['Date'] == date) & (df['User'] == session['username'])]
+
+    responses = user_records['Response'].tolist()
+    diary_entry = summarize_responses(responses)
+
+    return render_template('record.html', date=date, diary_entry=diary_entry)
