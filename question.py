@@ -41,7 +41,7 @@ def tts_function(text):
 
 def check_answer(user_answer, question):
     correct_answer = question_data[question]
-    if user_answer.lower() == correct_answer.lower():
+    if correct_answer.lower() in user_answer.lower():
         return True
     else:
         return False
