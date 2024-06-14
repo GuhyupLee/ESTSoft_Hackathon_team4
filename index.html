@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voice Chat App</title>
+    <script>
+        let mediaRecorder;
+        let chunks = [];
+        let isRecording = false;
+        let conversationStarted = false;
+
+        async function toggleConversation() {
+            if (!conversationStarted) {
+                const response = await fetch("/start");
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+                conversationStarted = true;
+                document.getElementById("conversationButton").textContent = "녹음 시작";
+            } else {
+                toggleRecording();
+            }
+        }
+
+        async function toggleRecording() {
+            if (isRecording) {
+                mediaRecorder.stop();
+                document.getElementById("conversationButton").textContent = "녹음 시작";
+            } else {
+                chunks = [];
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                mediaRecorder.ondataavailable = (e) => {
+                    chunks.push(e.data);
+                };
+                mediaRecorder.onstop = async (e) => {
+                    const audioBlob = new Blob(chunks, { type: "audio/mpeg" });
+                    const formData = new FormData();
+                    formData.append("file", audioBlob, "input.mp3");
+                    const response = await fetch("/conversation", {
+                        method: "POST",
+                        body: formData,
+                    });
+                    const responseAudioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(responseAudioBlob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                };
+                document.getElementById("conversationButton").textContent = "녹음 정지";
+            }
+            isRecording = !isRecording;
+        }
+    </script>
+</head>
+<body>
+    <h1>Voice Chat App</h1>
+    <button id="conversationButton" onclick="toggleConversation()">대화 시작</button>
+</body>
+</html>
