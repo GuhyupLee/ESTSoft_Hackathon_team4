@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>음성 대화 애플리케이션</title>
+</head>
+<body>
+    <h1>음성 대화 애플리케이션</h1>
+    <button id="startButton">대화 시작</button>
+    <button id="stopButton" disabled>대화 종료</button>
+    <audio id="audioPlayer" autoplay></audio>
+    <script>
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const audioPlayer = document.getElementById('audioPlayer');
+        let mediaRecorder;
+    
+        startButton.addEventListener('click', async () => {
+            startButton.disabled = true;
+            stopButton.disabled = false;
+    
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+    
+            const audioChunks = [];
+            mediaRecorder.addEventListener("dataavailable", (event) => {
+                audioChunks.push(event.data);
+            });
+    
+            mediaRecorder.addEventListener("stop", async () => {
+                const audioBlob = new Blob(audioChunks);
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'input.mp3');
+    
+                const response = await fetch('/start_conversation', {
+                    method: 'POST',
+                    body: formData
+                });
+    
+                const processedAudioBlob = await response.blob();
+                const processedAudioUrl = URL.createObjectURL(processedAudioBlob);
+                audioPlayer.src = processedAudioUrl;
+                audioPlayer.play();
+            });
+        });
+    
+        stopButton.addEventListener('click', () => {
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            mediaRecorder.stop();
+        });
+    
+        async function startConversation() {
+            const response = await fetch('/start_conversation', {
+                method: 'POST'
+            });
+            const startAudioBlob = await response.blob();
+            const startAudioUrl = URL.createObjectURL(startAudioBlob);
+            audioPlayer.src = startAudioUrl;
+            audioPlayer.play();
+        }
+    
+        window.addEventListener('load', startConversation);
+    </script>
+</body>
+</html>
