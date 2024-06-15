@@ -193,6 +193,23 @@ def get_audio():
 @main_bp.route('/answer', methods=['POST'])
 def answer_question():
     """질문에 대한 답변 처리"""
+    correct_response = [
+        "우와! 정답이에요 😄",
+        "훌륭해요.",
+        "정답입니다!",
+        "정말 대단해요"
+    ]
+    incorrect_response = [
+        "아쉽지만 오답입니다.",
+        "아쉽게도 틀리셨어요.",
+        "아깝네요.",
+        "아쉽네요. 다음문제에 도전할까요?",
+        "틀렸습니다. 하지만 잘하고 있어요!"
+    ]
+
+    random_correct_response = random.choice(correct_response)
+    random_incorrect_response = random.choice(incorrect_response)
+    
     file = request.files['file']
     state["total_questions"] += 1
     file.save("input.mp3")
@@ -201,9 +218,9 @@ def answer_question():
     is_correct = check_answer(user_answer, question)
     if is_correct:
         state["correct_answers"] += 1
-        response_text = "정답입니다!"
+        response_text = random_correct_response
     else:
-        response_text = f"틀렸습니다. 정답은 {question_data[question]}입니다."
+        response_text = f"{random_incorrect_response} 정답은 {question_data[question]}입니다."
     
     # 기록 저장
     save_response_question(session['username'], question, user_answer, is_correct)
