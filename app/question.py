@@ -2,7 +2,7 @@ from openai import OpenAI
 import os
 import random
 import csv
-from question_data import question_data
+from .question_data import question_data
 
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
@@ -59,3 +59,13 @@ def load_last_question():
             return rows[-1][0]
         else:
             return ""
+        
+def get_average_accuracy_by_age(age):
+    if age < 30:
+        return 90
+    elif age < 50:
+        return 80
+    elif age < 70:
+        return 70
+    else:
+        return 60

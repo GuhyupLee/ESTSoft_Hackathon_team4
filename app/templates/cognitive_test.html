@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <title>기억나래 : 인지력 향상 퀴즈</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <!-- Chart.js 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Chart.js Annotation 플러그인 -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
     <script>
         let mediaRecorder;
@@ -44,7 +42,7 @@
                 const audioUrl = URL.createObjectURL(responseAudioBlob);
                 const audio = new Audio(audioUrl);
                 audio.play();
-                await updateAccuracy();  // 정확도 업데이트 함수 호출
+                await updateAccuracy();
             };
         }
 
@@ -60,14 +58,14 @@
             }
         }
 
-        // 정확도 데이터를 서버에서 가져와 차트와 정확도 표시를 업데이트하는 함수
+        let averageAccuracyGlobal;
+
         async function updateAccuracy() {
             const response = await fetch("/accuracy");
             const result = await response.json();
             const accuracy = parseFloat(result.accuracy.toFixed(2));
             document.getElementById("accuracy").textContent = `정답률: ${accuracy}%`;
 
-            // 서버에서 최신 정확도 데이터 가져오기
             const accuracyDataResponse = await fetch("/accuracy_data");
             accuracyData = await accuracyDataResponse.json();
 
@@ -76,6 +74,8 @@
             if (chart) {
                 chart.data.labels = accuracyData.map((_, index) => index + 1);
                 chart.data.datasets[0].data = accuracyData;
+                chart.options.plugins.annotation.annotations.line1.yMin = averageAccuracyGlobal;
+                chart.options.plugins.annotation.annotations.line1.yMax = averageAccuracyGlobal;
                 chart.update();
             } else {
                 chart = new Chart(ctx, {
@@ -102,8 +102,8 @@
                                 annotations: {
                                     line1: {
                                         type: 'line',
-                                        yMin: 75,
-                                        yMax: 75,
+                                        yMin: averageAccuracyGlobal,
+                                        yMax: averageAccuracyGlobal,
                                         borderColor: 'red',
                                         borderWidth: 2,
                                         label: {
@@ -120,18 +120,35 @@
             }
         }
 
-        // 사용자 데이터를 서버에서 가져오는 함수
         async function loadUserData() {
             const response = await fetch("/user_data");
             const userData = await response.json();
+            if (userData.error) {
+                console.error("Error loading user data:", userData.error);
+                return null;
+            }
             document.getElementById("name").textContent = userData.Name;
             document.getElementById("age").textContent = userData.Age;
+            
+            const age = userData.Age;
+            if (age < 30) {
+                averageAccuracyGlobal = 90;
+            } else if (age < 50) {
+                averageAccuracyGlobal = 80;
+            } else if (age < 70) {
+                averageAccuracyGlobal = 70;
+            } else {
+                averageAccuracyGlobal = 60;
+            }
+
+            return averageAccuracyGlobal;
         }
 
-        // 페이지 로드 시 최신 사용자 데이터와 정확도 데이터를 서버에서 가져오는 부분
         window.onload = async function() {
-            await loadUserData();  // 사용자 데이터 로드
-            await updateAccuracy();  // 정확도 데이터 로드 및 업데이트
+            const averageAccuracy = await loadUserData();
+            if (averageAccuracy !== null) {
+                await updateAccuracy();
+            }
         };
     </script>
 </head>
