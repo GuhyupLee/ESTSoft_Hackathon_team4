@@ -28,8 +28,8 @@ def get_random_question(exclude_question=None):
 
 def get_gpt_response(conversation, current_question):
     prompt = conversation + [
-        {"role": "system", 
-         "content": """
+        {"role": "system", "content": "You are a friendly chatbot that engages in casual conversation. You must answer in Korean."},
+        {"role": "user", "content": """
          1. 너의 목표는 노인과 대화하는 친절하고 공손한 어른이야. 
          2. 사용자가 질문을 하면 반드시 관련된 후속 질문을 통해 공손한 대화를 해. 
          3. 대화의 문맥을 기억하고, 사용자의 이전 답변을 바탕으로 관련된 이야기를 해. 
@@ -38,9 +38,7 @@ def get_gpt_response(conversation, current_question):
          6. 질문이 길면 단계별로 생각하고 답을 줘
          7. 질문으로 대답을해
          8. 감성적으로 대답을 하고 칭찬도 자주해줘
-         """
-        },
-    ]
+         """}]
     client = openai.OpenAI()
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -112,3 +110,20 @@ def get_all_dates_in_month(year, month):
 
 def contains_question(text):
     return '?' in text
+
+def generate_dall_e_image(prompt):
+    # DALL-E 모델을 사용하여 이미지를 생성하고 URL을 반환합니다.
+    client = openai.OpenAI()
+
+    image_params = {
+        "model": "dall-e-3",  # 사용할 모델 지정
+        "prompt": prompt,
+        "n": 1,  # 생성할 이미지 수
+        "size": "1024x1024",  # 생성할 이미지 크기
+        "response_format": "url"  # 응답 형식
+    }
+
+    response = client.images.generate(**image_params)
+
+    image_url = response.data[0].url
+    return image_url
