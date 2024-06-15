@@ -80,6 +80,7 @@ def signup():
         return redirect(url_for('main.login'))
     return render_template('signup.html')
 
+
 @main_bp.route('/chat', methods=['GET', 'POST'])
 def chat():
     """챗봇 페이지 렌더링 및 대화 처리"""

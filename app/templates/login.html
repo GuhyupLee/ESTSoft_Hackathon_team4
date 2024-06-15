@@ -21,6 +21,7 @@
             background-color: #fff;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
         form {
             display: flex;
@@ -42,6 +43,10 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        .flash-messages {
+            margin-top: 15px;
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -52,7 +57,15 @@
             <input type="password" name="password" required placeholder="Password">
             <button type="submit">Login</button>
         </form>
-        <p>{{ get_flashed_messages() }}</p>
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
     </div>
 </body>
 </html>
