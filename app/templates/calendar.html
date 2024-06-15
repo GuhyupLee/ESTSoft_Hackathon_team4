@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .container {
+            width: 360px;
+            height: 800px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 세로 방향 가운데 정렬 */
+            justify-content: center; /* 가로 방향 가운데 정렬 */
+            padding: 20px;
+            position: relative;
+        }
+        .calendar-box {
+            width: 330px;
+            height: 400px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 20px; /* 날짜 선택해 다시보기와의 간격 조정 */
+        }
+        .calendar-container {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            padding: 10px;
+        }
+        .calendar-day {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            margin: 2px;
+            background-color: #fff;
+            border-radius: 50%;
+            text-align: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            color: #000;
+        }
+        .calendar-day.recorded {
+            cursor: pointer;
+            border: 2px solid #000000; /* 원하는 테두리 스타일과 색상 설정 */
+        }
+        .calendar-day.recorded:hover {
+            background-color: #0078d7;
+            color: #fff;
+        }
+        
+        .calendar-day a {
+            text-decoration: none;
+            color: inherit;
+            font-weight: bold;
+            display: block;
+            width: 100%;
+            height: 100%;
+            line-height: 40px;
+        }
+        .calendar-day.empty {
+            background-color: transparent;
+            border: none;
+        }
+        .calendar-day.saturday {
+            color: blue;
+        }
+        .calendar-day.sunday {
+            color: red;
+        }
+        .month-header {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 10px; /* 버튼과 달력 사이 간격 조정 */
+        }
+        .nav-buttons a {
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+            background-color: #fff;
+            padding: 5px 10px;
+            border-radius: 3px;
+            border: 1px solid #dcdcdc;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+        .nav-buttons a:hover {
+            background-color: #e1e1e1;
+        }
+        .back-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10; /* 다른 요소 위에 보이도록 설정 */
+        }
+        .review-prompt {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 70px; /* 아래쪽 여백 추가 */
+        }
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            width: 100%;
+        }
+        .weekday {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .weekday.saturday {
+            color: blue;
+        }
+        .weekday.sunday {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="back-button">
+            <a href="javascript:history.back()">
+                <img src="{{ url_for('static', filename='images/back.png') }}" alt="Back" width="30">
+            </a>
+        </div>
+        <div class="review-prompt">
+            날짜를 선택하고<br>일기장 다시보기
+        </div>
+        <div class="calendar-box">
+            <div class="month-header">
+                {{ current_year }}년 {{ current_month }}월
+            </div>
+            <div class="nav-buttons">
+                <a href="{{ url_for('main.calendar_view', year=prev_year, month=prev_month) }}">&lt;</a>
+                <a href="{{ url_for('main.calendar_view', year=next_year, month=next_month) }}">&gt;</a>
+            </div>
+            <div class="weekdays">
+                <div class="weekday sunday">S</div>
+                <div class="weekday">M</div>
+                <div class="weekday">T</div>
+                <div class="weekday">W</div>
+                <div class="weekday">T</div>
+                <div class="weekday">F</div>
+                <div class="weekday saturday">S</div>
+            </div>
+            <div class="calendar-container">
+                {% for date in dates %}
+                    {% set day = date.split('-')[-1] %}
+                    <div class="calendar-day {% if date in recorded_dates %}recorded{% endif %} {% if loop.index0 % 7 == 6 %}saturday{% elif loop.index0 % 7 == 0 %}sunday{% endif %}">
+                        {% if date in recorded_dates %}
+                            <a href="{{ url_for('main.record', date=date) }}">{{ day }}</a>
+                        {% else %}
+                            {{ day }}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
