@@ -44,7 +44,7 @@ def tts_function(text):
     response = client.audio.speech.create(
         model="tts-1",
         input=text,
-        voice="echo",
+        voice="nova",
         response_format="mp3",
         speed=1,
     )

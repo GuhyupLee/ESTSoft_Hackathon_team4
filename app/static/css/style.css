@@ -26,9 +26,28 @@ main {
 }
 
 header {
-    text-align: center;
-    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
     margin-bottom: 20px;
+}
+
+.home-button,
+.result-button,
+.test-button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.home-button:hover,
+.result-button:hover,
+.test-button:hover {
+    background-color: #0056b3;
 }
 
 header .back-button {
@@ -49,8 +68,9 @@ header .back-button img {
 }
 
 h1 {
-    font-size: 20px;
-    margin: 0;
+    width: 100%;
+    text-align: center;
+    margin-top: 10px;
 }
 
 /* Styles for cognitive_result.html */
