@@ -33,12 +33,37 @@
         p {
             line-height: 1.6;
         }
+        .diary-content {
+            margin-top: 20px;
+        }
+        .generate-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>{{ date }} 일기</h1>
-        <p>{{ diary_entry }}</p>
+        {% if image_url %}
+            <img src="{{ image_url }}" alt="Generated Image" style="width:100%; height:auto; margin-bottom: 20px;">
+        {% endif %}
+        <div class="diary-content">
+            {% if diary_entry %}
+                <p>{{ diary_entry }}</p>
+            {% else %}
+                <p>일기가 아직 생성되지 않았습니다.</p>
+            {% endif %}
+        </div>
+        <form method="post">
+            <button type="submit" class="generate-button">일기 생성</button>
+        </form>
     </div>
 </body>
 </html>
