@@ -93,17 +93,17 @@
             {% endif %}
         </div>
         {% if 'username' in session %}
-            <div class="welcome-message">
-                <p>반가워요, {{ session['username'] }}님!<br>피보호자의 기록을 확인하세요 :D</p>
-            </div>
-            <div class="menu">
-                <form method="get" action="{{ url_for('main.view_ward_diary') }}">
-                    <button type="submit">피보호자의 그림일기 보기</button>
-                </form>
-                <form method="get" action="{{ url_for('main.guardian_cognitive_result') }}">
-                    <button type="submit">피보호자의 인지능력 테스트 결과 보기</button>
-                </form>
-            </div>
+        <div class="welcome-message">
+            <p>반가워요, {{ session['username'] }}님!<br>{{ward_username}}님의 기록을 확인하세요 :D</p>
+        </div>
+        <div class="menu">
+            <form method="get" action="{{ url_for('main.view_ward_diary') }}">
+                <button type="submit">{{ward_username}}의 그림일기 보기</button>
+            </form>
+            <form method="get" action="{{ url_for('main.guardian_cognitive_result') }}">
+                <button type="submit">{{ward_username}}의 인지능력 테스트 결과 보기</button>
+            </form>
+        </div>
         {% else %}
             <div class="menu">
                 <form method="get" action="{{ url_for('main.guardian_login') }}">

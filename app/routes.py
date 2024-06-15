@@ -119,7 +119,10 @@ def login():
 def guardian_main():
     if 'username' not in session or session.get('role') != 'guardian':
         return redirect(url_for('main.login'))
-    return render_template('guardian_main.html')
+
+    ward_username = session.get('ward_username')
+    return render_template('guardian_main.html', ward_username=ward_username)
+
 
 @main_bp.route('/guardian_login', methods=['GET', 'POST'])
 def guardian_login():
