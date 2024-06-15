@@ -26,56 +26,75 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: space-around;
             align-items: center;
+            position: relative;
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;  /* 백 버튼의 상단 위치 조정 */
+            left: 20px; /* 백 버튼의 왼쪽 위치 조정 */
+        }
+        .back-button img {
+            width: 40px; /* 백 버튼 이미지 크기 조정 */
         }
         .header {
             text-align: center;
             width: 100%;
+            margin-top: 60px; /* 백 버튼과의 간격 조정 */
         }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .header p {
-            margin: 5px 0;
+        .header img {
+            max-width: 100%;
         }
         .menu {
             display: flex;
-            justify-content: center;
             flex-direction: column;
             width: 100%;
+            align-items: center;
+            margin-top: 20px; /* 헤더 이미지와 버튼 간의 간격 조정 */
         }
         .menu form {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             width: 100%;
         }
         .menu button {
             width: 100%;
-            padding: 10px;
-            margin: 0;
             border: none;
-            border-radius: 20px;
-            background-color: #007bff;
-            color: #fff;
+            background: none;
+            padding: 0;
             cursor: pointer;
-            font-size: 16px;
+        }
+        .menu button img {
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .menu button img:hover {
+            transform: scale(1.05);
         }
     </style>
 </head>
 <body>
     <div class="outer-container">
-        <div class="header">
-            <h1>도란이와 대화하기</h1>
-            <p>원하는 기능을 선택하세요:</p>
+        <div class="back-button">
+            <a href="javascript:history.back()">
+                <img src="{{ url_for('static', filename='images/back.png') }}" alt="뒤로가기">
+            </a>
         </div>
-
-        <div class="menu">
+        <div class="header">
+            <img src="{{ url_for('static', filename='images/2_select_button0.png') }}" alt="도란이와 어떤 대화를 나눠볼까요?">
+        </div>
+        <div class="menu" style="margin-top: -20px;"> <!-- 헤더 이미지와 버튼 간의 간격 조정 -->
             <form method="get" action="{{ url_for('main.chat') }}">
-                <button type="submit">챗봇</button>
+                <button type="submit">
+                    <img src="{{ url_for('static', filename='images/2_select_button1.png') }}" alt="오늘 있었던 일들을 이야기하고 싶어">
+                </button>
             </form>
             <form method="get" action="{{ url_for('main.cognitive_test') }}">
-                <button type="submit">인지기능검사</button>
+                <button type="submit">
+                    <img src="{{ url_for('static', filename='images/2_select_button2.png') }}" alt="말랑말랑한 뇌를 위해 생각 문제 풀어볼래">
+                </button>
             </form>
         </div>
     </div>
