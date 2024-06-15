@@ -2,204 +2,32 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>기억나래 : 인지력 향상 퀴즈</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
-    <script>
-        let mediaRecorder;
-        let chunks = [];
-        let accuracyData = [];
-        let chart;
-        let averageAccuracyGlobal;
-
-        async function startQuestion() {
-            const response = await fetch("/start_random");
-            const audioBlob = await response.blob();
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audio = new Audio(audioUrl);
-            audio.play();
-        }
-
-        async function startRecording() {
-            chunks = [];
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.start();
-                mediaRecorder.ondataavailable = (e) => {
-                    chunks.push(e.data);
-                };
-                mediaRecorder.onstop = async (e) => {
-                    const recordingBlob = new Blob(chunks, { type: "audio/mpeg" });
-                    const formData = new FormData();
-                    formData.append("file", recordingBlob, "input.mp3");
-                    try {
-                        const response = await fetch("/answer", {
-                            method: "POST",
-                            body: formData,
-                        });
-                        if (response.ok) {
-                            const responseAudioBlob = await response.blob();
-                            const audioUrl = URL.createObjectURL(responseAudioBlob);
-                            const audio = new Audio(audioUrl);
-                            audio.play();
-                            await updateAccuracy();
-                        } else {
-                            console.error('Failed to process the answer:', response.statusText);
-                        }
-                    } catch (error) {
-                        console.error('Error fetching answer:', error);
-                    }
-                };
-                console.log("Recording started...");
-            } catch (error) {
-                console.error("Error accessing media devices:", error);
-            }
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state === "recording") {
-                mediaRecorder.stop();
-                console.log("Recording stopped.");
-            } else {
-                console.log("No recording in progress.");
-            }
-        }
-
-        function toggleRecording() {
-            if (mediaRecorder && mediaRecorder.state === "recording") {
-                stopRecording();
-            } else {
-                startRecording();
-            }
-        }
-
-        async function updateAccuracy() {
-            try {
-                const response = await fetch("/accuracy");
-                if (response.ok) {
-                    const result = await response.json();
-                    const accuracy = parseFloat(result.accuracy.toFixed(2));
-                    document.getElementById("accuracy").textContent = `정답률: ${accuracy}%`;
-
-                    const accuracyDataResponse = await fetch("/accuracy_data");
-                    if (accuracyDataResponse.ok) {
-                        accuracyData = await accuracyDataResponse.json();
-
-                        const ctx = document.getElementById("accuracy-chart").getContext("2d");
-
-                        if (chart) {
-                            chart.data.labels = accuracyData.map((_, index) => index + 1);
-                            chart.data.datasets[0].data = accuracyData;
-                            chart.options.plugins.annotation.annotations.line1.yMin = averageAccuracyGlobal;
-                            chart.options.plugins.annotation.annotations.line1.yMax = averageAccuracyGlobal;
-                            chart.update();
-                        } else {
-                            chart = new Chart(ctx, {
-                                type: "line",
-                                data: {
-                                    labels: accuracyData.map((_, index) => index + 1),
-                                    datasets: [{
-                                        label: "정답률",
-                                        data: accuracyData,
-                                        borderColor: "rgba(75, 192, 192, 1)",
-                                        fill: false
-                                    }]
-                                },
-                                options: {
-                                    responsive: true,
-                                    scales: {
-                                        y: {
-                                            beginAtZero: true,
-                                            max: 100
-                                        }
-                                    },
-                                    plugins: {
-                                        annotation: {
-                                            annotations: {
-                                                line1: {
-                                                    type: 'line',
-                                                    yMin: averageAccuracyGlobal,
-                                                    yMax: averageAccuracyGlobal,
-                                                    borderColor: 'red',
-                                                    borderWidth: 2,
-                                                    label: {
-                                                        content: '나이대 평균 점수',
-                                                        enabled: true,
-                                                        position: 'center'
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    } else {
-                        console.error('Failed to fetch accuracy data:', accuracyDataResponse.statusText);
-                    }
-                } else {
-                    console.error('Failed to fetch accuracy:', response.statusText);
-                }
-            } catch (error) {
-                console.error('Error updating accuracy:', error);
-            }
-        }
-
-        async function loadUserData() {
-            try {
-                const response = await fetch("/user_data");
-                if (response.ok) {
-                    const userData = await response.json();
-                    document.getElementById("name").textContent = userData.Name;
-                    document.getElementById("age").textContent = userData.Age;
-
-                    const age = userData.Age;
-                    if (age < 30) {
-                        averageAccuracyGlobal = 90;
-                    } else if (age < 50) {
-                        averageAccuracyGlobal = 80;
-                    } else if (age < 70) {
-                        averageAccuracyGlobal = 70;
-                    } else {
-                        averageAccuracyGlobal = 60;
-                    }
-                } else {
-                    console.error('Failed to load user data:', response.statusText);
-                }
-            } catch (error) {
-                console.error('Error loading user data:', error);
-            }
-        }
-
-        window.onload = async function() {
-            await loadUserData();
-            await updateAccuracy();
-        };
-    </script>
+    <title>생각 문제 풀기</title>
+    <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
-    <header>
-        <h1>두뇌 트레이닝 앱</h1>
-    </header>
     <main>
-        <section id="user-info">
-            <p><strong>이름:</strong> <span id="name"></span></p>
-            <p><strong>나이:</strong> <span id="age"></span></p>
+        <header>
+            <a href="/" class="home-button">처음으로</a>
+            <a href="/cognitive_result" class="result-button">결과보기</a>
+            <h1>생각 문제 풀기</h1>
+        </header>
+        <section class="character">
+            <img src="static/images/character.jpg" alt="도란이 캐릭터">
         </section>
-        <section id="question-section">
-            <button id="start-question" onclick="startQuestion()">문제 듣기</button>
-            <button id="record-button" onclick="toggleRecording()">
-                <i class="fas fa-microphone"></i>
+        <section id="question-bubble" class="question-bubble hidden"></section>
+        <section id="user-response" class="user-response hidden"></section>
+        <section id="result" class="result hidden"></section>
+        <div class="buttons">
+            <button id="listen-button" class="action-button" onclick="startQuestion()">
+                <img src="static/images/speaker.png" alt="스피커 아이콘"> 문제 듣기
             </button>
-        </section>
-        <section id="result-section">
-            <p id="accuracy">정답률: 0%</p>
-            <canvas id="accuracy-chart"></canvas>
-        </section>
+            <button id="record-button" class="action-button" onclick="toggleRecording()">
+                <img src="static/images/microphone.png" alt="마이크 아이콘"> 버튼 누르고 대답하기
+            </button>
+        </div>
     </main>
+    <script src="static/js/cognitive_test.js"></script>
 </body>
 </html>

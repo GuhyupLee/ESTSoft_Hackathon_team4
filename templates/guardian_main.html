@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Main Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .outer-container {
+            width: 360px;
+            height: 600px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .logout-form {
+            display: inline;
+        }
+        .logout-form button {
+            background: none;
+            border: none;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .welcome-message {
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .menu a {
+            text-decoration: none;
+            margin-bottom: 10px;
+        }
+        .menu button {
+            width: 100%;
+            padding: 10px;
+            margin: 0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            background-color: #1E90FF; /* 파란색 */
+            color: white;
+        }
+        .empty-space {
+            height: 100px; /* 이미지 크기에 맞춘 공백 */
+        }
+    </style>
+</head>
+<body>
+    <div class="outer-container">
+        <div class="header">
+            <h1>기억나래 보호자</h1>
+            {% if 'username' in session %}
+                <form method="POST" action="{{ url_for('main.logout') }}" class="logout-form">
+                    <button type="submit">로그아웃</button>
+                </form>
+            {% endif %}
+        </div>
+        {% if 'username' in session %}
+            <div class="welcome-message">
+                <p>보호자님 환영합니다!<br>지금 {{ ward_username }}님의 데이터를 보고 계십니다.</p>
+            </div>
+        {% endif %}
+        <div class="menu">
+            {% if 'username' in session %}
+                <a href="{{ url_for('main.view_ward_diary') }}">
+                    <button>피보호자의 그림일기 보기</button>
+                </a>
+                <a href="{{ url_for('main.guardian_cognitive_result') }}">
+                    <button>피보호자의 인지능력 테스트 결과 보기</button>
+                </a>
+            {% else %}
+                <form method="get" action="{{ url_for('main.guardian_login') }}">
+                    <button type="submit">Login</button>
+                </form>
+                <form method="get" action="{{ url_for('main.signup') }}">
+                    <button type="submit">Sign Up</button>
+                </form>
+            {% endif %}
+        </div>
+        <div class="empty-space"></div>
+    </div>
+</body>
+</html>
