@@ -37,9 +37,14 @@
         .back-button img {
             height: 40px; /* 뒤로가기 버튼 크기 조정 */
         }
-        .exit-button img {
-            height: 15px; /* 대화 종료 버튼 크기 조정 */
+        .exit-button {
+            height: 20px; /* 텍스트 크기 조정 */
             margin-right: 20px; /* 오른쪽으로 마진 추가 */
+            color: #000; /* 글자 색상 */
+            text-decoration: none; /* 밑줄 제거 */
+            font-weight: bold; /* 글자 굵게 */
+            border: 2px solid #000; /* Adds a 2-pixel solid black border */
+            padding: 5px; /* Adds 5 pixels of padding inside the border */
         }
         .character-image {
             width: 175px;
@@ -88,19 +93,20 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            position: absolute; /* 수정 */
-            bottom: 10px; /* 수정 */
-            width: 100%; /* 수정 */
-            height: 100px; /* 마이크 버튼 높이 조정 */
-            background-color: #fff; /* 버튼 주변 흰색 배경 */
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            height: 100px;
+            background-color: #fff;
             box-sizing: border-box;
         }
         .microphone button {
-            background-color: transparent; /* 배경색 제거 */
+            background-color: transparent;
             border: none;
             cursor: pointer;
             width: 90%;
             height: 85%;
+            position: relative;
         }
         .microphone img {
             width: 100%;
@@ -108,10 +114,12 @@
         }
         .microphone span {
             position: absolute;
-            top: 90px;
-            font-size: 14px;
+            bottom: 90px; /* 마이크 버튼 위에 위치 */
+            font-size: 20px; /* 글자 크기 늘리기 */
             color: red;
             display: none;
+            text-align: center;
+            width: 100%; /* 중앙 정렬 */
         }
     </style>
 </head>
@@ -121,9 +129,7 @@
             <a href="javascript:history.back()" class="back-button">
                 <img src="{{ url_for('static', filename='images/back.png') }}" alt="뒤로가기">
             </a>
-            <a href="{{ url_for('main.main') }}" class="exit-button">
-                <img src="{{ url_for('static', filename='images/3_daily_stop.png') }}" alt="대화 종료">
-            </a>
+            <a href="{{ url_for('main.calendar_view') }}" class="exit-button">일기 쓰러 가기</a>
         </div>
         <img src="{{ url_for('static', filename='images/3_daily_character.png') }}" alt="도란이 캐릭터" class="character-image">
         <div class="chatbox" id="chatbox">
@@ -134,10 +140,10 @@
             {% endfor %}
         </div>
         <div class="microphone">
+            <span id="recordingStatus">대답 중입니다.</span>
             <button id="micButton">
                 <img src="{{ url_for('static', filename='images/3_daily_button.png') }}" alt="마이크 버튼">
             </button>
-            <span id="recordingStatus">Recording...</span>
         </div>
     </div>
     <form id="chatForm" method="post" style="display: none;">

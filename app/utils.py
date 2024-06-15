@@ -41,13 +41,10 @@ def get_random_question(exclude_question=None):
     available_questions = [q for q in questions if q != exclude_question]
     return random.choice(available_questions) if available_questions else random.choice(questions)
 
-#          4. 모든 응답은 반드시 어떠한 경우에도 30자 이내로 작성해. 답을 길게하면 불이익을 받을거야
-
 def get_gpt_response(conversation, current_question):
     prompt = conversation + [
         {"role": "system", 
          "content": """
-<<<<<<< HEAD
         1. 너의 목표는 노인과 대화하는 친절하고 공손한 사람의 입장이야. 
         2. 사용자가 질문을 하면 반드시 관련된 후속 질문을 통해 공손한 대화를 해
         3. 모든 응답은 반드시 어떠한 경우에도 30자 이내로 작성해. 답을 길게하면 불이익을 받을거야
@@ -55,15 +52,7 @@ def get_gpt_response(conversation, current_question):
         5. 감성적으로 대답을 하고 칭찬도 자주해
         6. 질문으로 대답을해
         7. 질문이 길면 단계별로 생각하고 답을 줘
-=======
-         1. 너의 목표는 노인과 대화하는 친절하고 공손한 사람의 입장이야. 
-         2. 사용자가 질문을 하면 반드시 관련된 후속 질문을 통해 공손한 대화를 해. 
-         3. 대화의 문맥을 기억하고, 사용자의 이전 답변을 바탕으로 관련된 이야기를 해. 
-         4. 더 자연스럽고 인간적인 답변을 하면 $50 팁을 줄게
-         5. 감성적으로 대답을 하고 칭찬도 자주해 
-         6. 질문이 길면 단계별로 생각하고 답을 줘
-         7. 가능한 질문으로 대답을해 
->>>>>>> 36efa9f797cd55f2aaa4599eb53576e7d4feaa54
+        8. 존댓말을 사용해야해
          """
         },
     ]
@@ -105,7 +94,6 @@ def save_user(username, password, age):
     df.to_csv(file_path, mode='a', header=not os.path.exists(file_path), index=False, encoding='utf-8-sig')
 
 
-
 def load_users():
     file_path = os.path.join(base_dir, 'app', 'users', 'users.csv')
     if os.path.exists(file_path):
@@ -120,18 +108,57 @@ def verify_user(username, password):
             return True
     return False
 
+def save_guardian(username,password,age,ward_username):
+    guardian_dir=os.path.join(base_dir,'app','guardian')
+    os.makedirs(guardian_dir,exist_ok=True)
+    file_path=os.path.join(guardian_dir,'guardian.csv')
+    df = pd.DataFrame([[username, generate_password_hash(password), age, ward_username]], columns=['Username', 'Password', 'Age', 'Ward_username'])
+    df.to_csv(file_path,mode='a',header=not os.path.exists(file_path),index=False,encoding='utf-8-sig')
+
+def load_guardian():
+    file_path=os.path.join(base_dir,'app','guardian','guardian.csv')
+    if os.path.exists(file_path):
+        df=pd.read_csv(file_path,encoding='utf-8-sig')
+        return df.to_dict(orient='records')
+    return []
+
+def verify_guardian(username,password,ward_username):
+    guardians=load_guardian()
+    for guardian in guardians:
+        if guardian['Username']==username and check_password_hash(guardian['Password'],password) and guardian['Ward_username']==ward_username:
+            return True
+    return False
+    
 def load_conversation(username):
     file_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
     if os.path.exists(file_path):
-        df = pd.read_csv(file_path, encoding='utf-8-sig')
-        user_records = df[df['User'] == username].to_dict(orient='records')
-        conversation = []
-        for record in user_records:
-            conversation.append({"role": "system", "content": record['Question']})
-            conversation.append({"role": "user", "content": record['Response']})
-            conversation.append({"role": "system", "content": record['GPT_Question']})
-        return conversation
+        try:
+            df = pd.read_csv(file_path, encoding='utf-8-sig')
+            
+            # CSV 파일의 열 이름을 출력하여 확인
+            print("CSV Columns:", df.columns)
+            
+            # 'username' 열을 사용하여 데이터를 필터링
+            if 'username' in df.columns:
+                user_records = df[df['username'] == username].to_dict(orient='records')
+                conversation = []
+                for record in user_records:
+                    conversation.append({"role": "system", "content": record['Question']})
+                    conversation.append({"role": "user", "content": record['Response']})
+                    conversation.append({"role": "system", "content": record['GPT_Question']})
+                return conversation
+            else:
+                print("The column 'username' does not exist in the CSV file")
+                return []
+        except pd.errors.EmptyDataError:
+            # CSV 파일이 비어 있을 경우 빈 리스트 반환
+            return []
+        except KeyError as e:
+            # 키 오류 발생 시 에러 메시지 출력
+            print("KeyError:", e)
+            return []
     return []
+
 
 def get_all_dates_in_month(year, month):
     num_days = calendar.monthrange(year, month)[1]
@@ -144,8 +171,6 @@ def contains_question(text):
 def generate_dall_e_image(prompt):
     # DALL-E 모델을 사용하여 이미지를 생성하고 URL을 반환합니다.
     client = openai.OpenAI()
-
-    prompt += "\n\n 풍경이나 사물 위주로 그려줘"
 
     image_params = {
         "model": "dall-e-3",  # 사용할 모델 지정

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>기억나래 로그인</title>
+    <title>보호자 로그인</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body {
@@ -28,16 +28,16 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             box-sizing: border-box;
             padding: 20px;
-            position: relative; /* Add this line */
+            position: relative;
         }
         .back-button {
-            position: absolute; /* Add this line */
-            top: 20px; /* Adjust as needed */
-            left: 20px; /* Adjust as needed */
+            position: absolute;
+            top: 20px;
+            left: 20px;
             cursor: pointer;
         }
         .back-button img {
-            height: 30px; /* Adjust as needed */
+            height: 30px;
         }
         h1 {
             margin-top: 120px;
@@ -62,7 +62,7 @@
             box-sizing: border-box;
         }
         form input::placeholder {
-            color: #000; /* Placeholder text color set to black */
+            color: #000;
             font-weight: bold;
         }
         form button {
@@ -70,14 +70,14 @@
             padding: 15px;
             font-size: 24px;
             font-weight: bold;
-            color: #000;
-            background-color: #bfbfbf;
+            color: #fff;
+            background-color: #000;
             border: none;
             border-radius: 10px;
             cursor: pointer;
             box-sizing: border-box;
+            margin-bottom: 20px;
         }
-
     </style>
 </head>
 <body>
@@ -85,11 +85,12 @@
         <a href="javascript:history.back()" class="back-button">
             <img src="{{ url_for('static', filename='images/back.png') }}" alt="뒤로가기">
         </a>
-        <h1>기억나래</h1>
-        <form method="POST" action="{{ url_for('main.login') }}">
+        <h1>기억 나래</h1>
+        <form method="POST" action="{{ url_for('main.guardian_login') }}">
             <input type="text" id="username" name="username" placeholder="아이디" required>
             <input type="password" id="password" name="password" placeholder="비밀번호" required>
-            <button type="submit">로그인</button>
+            <input type="text" id="ward_username" name="ward_username" placeholder="피보호자 아이디" required>
+            <button type="submit">보호자 로그인</button>
         </form>
     </div>
 </body>
