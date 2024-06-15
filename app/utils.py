@@ -30,6 +30,18 @@ def get_random_question(exclude_question=None):
     available_questions = [q for q in questions if q != exclude_question]
     return random.choice(available_questions) if available_questions else random.choice(questions)
 
+### 우리의 context 에서 프롬프트 좋은 결과 얻기
+# 1. 청중 설정 (누구랑 대화하는지)
+# 2. GPT 의 role 설정 (자신이 어떤 역할인지)
+# 3. 반드시, 무조건, 등 확신을 주는 언어 쓰기
+# 4. 팁을 준다고 하기
+# 5. 단계별 생각을 시키기
+# 6. 인간적인 방식으로 답을 하라고 하기
+# 7. 임무, 목표 등을 설정해주기
+# 8. 질문시키기
+# ###
+
+
 def get_gpt_response(conversation, current_question):
     # 대화 기록을 바탕으로 GPT-4 모델을 사용하여 응답을 생성합니다.
     prompt = conversation + [
