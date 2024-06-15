@@ -38,7 +38,12 @@ def tts_function(text):
         speed=1,
     )
     return response.stream_to_file("output.mp3")
-
+    
+def start_question():
+    question = generate_question()
+    tts_function(question)
+    return send_file('question.mp3', mimetype='audio/mpeg')
+    
 def check_answer(user_answer, question):
     correct_answer = question_data[question]
     if correct_answer.lower() in user_answer.lower():

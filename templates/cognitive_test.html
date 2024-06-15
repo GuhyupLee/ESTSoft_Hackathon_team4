@@ -13,9 +13,10 @@
         let chunks = [];
         let accuracyData = [];
         let chart;
+        let averageAccuracyGlobal;
 
         async function startQuestion() {
-            const response = await fetch("/start");
+            const response = await fetch("/start_random");
             const audioBlob = await response.blob();
             const audioUrl = URL.createObjectURL(audioBlob);
             const audio = new Audio(audioUrl);
@@ -24,30 +25,48 @@
 
         async function startRecording() {
             chunks = [];
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.start();
-            mediaRecorder.ondataavailable = (e) => {
-                chunks.push(e.data);
-            };
-            mediaRecorder.onstop = async (e) => {
-                const recordingBlob = new Blob(chunks, { type: "audio/mpeg" });
-                const formData = new FormData();
-                formData.append("file", recordingBlob, "input.mp3");
-                const response = await fetch("/answer", {
-                    method: "POST",
-                    body: formData,
-                });
-                const responseAudioBlob = await response.blob();
-                const audioUrl = URL.createObjectURL(responseAudioBlob);
-                const audio = new Audio(audioUrl);
-                audio.play();
-                await updateAccuracy();
-            };
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                mediaRecorder.ondataavailable = (e) => {
+                    chunks.push(e.data);
+                };
+                mediaRecorder.onstop = async (e) => {
+                    const recordingBlob = new Blob(chunks, { type: "audio/mpeg" });
+                    const formData = new FormData();
+                    formData.append("file", recordingBlob, "input.mp3");
+                    try {
+                        const response = await fetch("/answer", {
+                            method: "POST",
+                            body: formData,
+                        });
+                        if (response.ok) {
+                            const responseAudioBlob = await response.blob();
+                            const audioUrl = URL.createObjectURL(responseAudioBlob);
+                            const audio = new Audio(audioUrl);
+                            audio.play();
+                            await updateAccuracy();
+                        } else {
+                            console.error('Failed to process the answer:', response.statusText);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching answer:', error);
+                    }
+                };
+                console.log("Recording started...");
+            } catch (error) {
+                console.error("Error accessing media devices:", error);
+            }
         }
 
         function stopRecording() {
-            mediaRecorder.stop();
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                console.log("Recording stopped.");
+            } else {
+                console.log("No recording in progress.");
+            }
         }
 
         function toggleRecording() {
@@ -58,97 +77,107 @@
             }
         }
 
-        let averageAccuracyGlobal;
-
         async function updateAccuracy() {
-            const response = await fetch("/accuracy");
-            const result = await response.json();
-            const accuracy = parseFloat(result.accuracy.toFixed(2));
-            document.getElementById("accuracy").textContent = `정답률: ${accuracy}%`;
+            try {
+                const response = await fetch("/accuracy");
+                if (response.ok) {
+                    const result = await response.json();
+                    const accuracy = parseFloat(result.accuracy.toFixed(2));
+                    document.getElementById("accuracy").textContent = `정답률: ${accuracy}%`;
 
-            const accuracyDataResponse = await fetch("/accuracy_data");
-            accuracyData = await accuracyDataResponse.json();
+                    const accuracyDataResponse = await fetch("/accuracy_data");
+                    if (accuracyDataResponse.ok) {
+                        accuracyData = await accuracyDataResponse.json();
 
-            const ctx = document.getElementById("accuracy-chart").getContext("2d");
+                        const ctx = document.getElementById("accuracy-chart").getContext("2d");
 
-            if (chart) {
-                chart.data.labels = accuracyData.map((_, index) => index + 1);
-                chart.data.datasets[0].data = accuracyData;
-                chart.options.plugins.annotation.annotations.line1.yMin = averageAccuracyGlobal;
-                chart.options.plugins.annotation.annotations.line1.yMax = averageAccuracyGlobal;
-                chart.update();
-            } else {
-                chart = new Chart(ctx, {
-                    type: "line",
-                    data: {
-                        labels: accuracyData.map((_, index) => index + 1),
-                        datasets: [{
-                            label: "정답률",
-                            data: accuracyData,
-                            borderColor: "rgba(75, 192, 192, 1)",
-                            fill: false
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 100
-                            }
-                        },
-                        plugins: {
-                            annotation: {
-                                annotations: {
-                                    line1: {
-                                        type: 'line',
-                                        yMin: averageAccuracyGlobal,
-                                        yMax: averageAccuracyGlobal,
-                                        borderColor: 'red',
-                                        borderWidth: 2,
-                                        label: {
-                                            content: '나이대 평균 점수',
-                                            enabled: true,
-                                            position: 'center'
+                        if (chart) {
+                            chart.data.labels = accuracyData.map((_, index) => index + 1);
+                            chart.data.datasets[0].data = accuracyData;
+                            chart.options.plugins.annotation.annotations.line1.yMin = averageAccuracyGlobal;
+                            chart.options.plugins.annotation.annotations.line1.yMax = averageAccuracyGlobal;
+                            chart.update();
+                        } else {
+                            chart = new Chart(ctx, {
+                                type: "line",
+                                data: {
+                                    labels: accuracyData.map((_, index) => index + 1),
+                                    datasets: [{
+                                        label: "정답률",
+                                        data: accuracyData,
+                                        borderColor: "rgba(75, 192, 192, 1)",
+                                        fill: false
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            max: 100
+                                        }
+                                    },
+                                    plugins: {
+                                        annotation: {
+                                            annotations: {
+                                                line1: {
+                                                    type: 'line',
+                                                    yMin: averageAccuracyGlobal,
+                                                    yMax: averageAccuracyGlobal,
+                                                    borderColor: 'red',
+                                                    borderWidth: 2,
+                                                    label: {
+                                                        content: '나이대 평균 점수',
+                                                        enabled: true,
+                                                        position: 'center'
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
-                            }
+                            });
                         }
+                    } else {
+                        console.error('Failed to fetch accuracy data:', accuracyDataResponse.statusText);
                     }
-                });
+                } else {
+                    console.error('Failed to fetch accuracy:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error updating accuracy:', error);
             }
         }
 
         async function loadUserData() {
-            const response = await fetch("/user_data");
-            const userData = await response.json();
-            if (userData.error) {
-                console.error("Error loading user data:", userData.error);
-                return null;
-            }
-            document.getElementById("name").textContent = userData.Name;
-            document.getElementById("age").textContent = userData.Age;
-            
-            const age = userData.Age;
-            if (age < 30) {
-                averageAccuracyGlobal = 90;
-            } else if (age < 50) {
-                averageAccuracyGlobal = 80;
-            } else if (age < 70) {
-                averageAccuracyGlobal = 70;
-            } else {
-                averageAccuracyGlobal = 60;
-            }
+            try {
+                const response = await fetch("/user_data");
+                if (response.ok) {
+                    const userData = await response.json();
+                    document.getElementById("name").textContent = userData.Name;
+                    document.getElementById("age").textContent = userData.Age;
 
-            return averageAccuracyGlobal;
+                    const age = userData.Age;
+                    if (age < 30) {
+                        averageAccuracyGlobal = 90;
+                    } else if (age < 50) {
+                        averageAccuracyGlobal = 80;
+                    } else if (age < 70) {
+                        averageAccuracyGlobal = 70;
+                    } else {
+                        averageAccuracyGlobal = 60;
+                    }
+                } else {
+                    console.error('Failed to load user data:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
         }
 
         window.onload = async function() {
-            const averageAccuracy = await loadUserData();
-            if (averageAccuracy !== null) {
-                await updateAccuracy();
-            }
+            await loadUserData();
+            await updateAccuracy();
         };
     </script>
 </head>
