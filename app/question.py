@@ -117,7 +117,7 @@ def percentile_for_age_and_score(age, score):
     percentile = stats.norm.cdf(score, mean_score, std_dev) * 100
     return percentile
 
-def save_response(username, question, answer, is_correct):
+def save_response_question(username, question, answer, is_correct):
     date = datetime.now().strftime('%Y-%m-%d')
     with open('responses.csv', mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)

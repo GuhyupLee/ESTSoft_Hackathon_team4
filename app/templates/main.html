@@ -10,68 +10,136 @@
             font-family: Arial, sans-serif;
             background-color: #f5f5f5;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-direction: column;
-            min-height: 100vh;
+            height: 100vh;
         }
-        .container {
+        .outer-container {
+            width: 360px;
+            height: 800px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .logout-form {
+            display: inline;
+        }
+        .logout-form button {
+            background: none;
+            border: none;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .welcome-message {
             text-align: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .diary {
+            width: 100%;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .diary img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 10px;
         }
         .menu {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            width: 100%;
             margin-top: 20px;
-            flex-wrap: wrap;
         }
         .menu form {
-            margin: 5px;
+            margin-bottom: 10px;
+            width: 100%;
         }
         .menu button {
-            padding: 10px 20px;
-            margin: 0 10px;
+            width: 100%;
+            padding: 10px;
+            margin: 0;
             border: none;
             border-radius: 20px;
-            background-color: #007bff;
-            color: #fff;
             cursor: pointer;
+            font-size: 16px;
+        }
+        .chat-button {
+            background-color: #FFD700; /* 노란색 */
+            color: black;
+        }
+        .diary-button {
+            background-color: #32CD32; /* 초록색 */
+            color: black;
+        }
+        .empty-space {
+            height: 100px; /* 이미지 크기에 맞춘 공백 */
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to the Main Page</h1>
+    <div class="outer-container">
+        <div class="header">
+            <h1>기억나래</h1>
+            {% if 'username' in session %}
+                <form method="POST" action="{{ url_for('main.logout') }}" class="logout-form">
+                    <button type="submit">로그아웃</button>
+                </form>
+            {% endif %}
+        </div>
         {% if 'username' in session %}
-            <p>Logged in as {{ session['username'] }}</p>
-            <div class="menu">
-                <form method="get" action="{{ url_for('main.chat') }}">
-                    <button type="submit">Chatbot</button>
+            <div class="welcome-message">
+                <p>반가워요, {{ session['username'] }}님!<br>오늘도 행복한 하루 되세요 :D</p>
+            </div>
+        {% endif %}
+        <div class="diary">
+            {% if 'username' in session %}
+                {% if yesterday_diary %}
+                    <img src="{{ url_for('static', filename=yesterday_diary['image_path']) }}" alt="어제 그림일기">
+                {% else %}
+                    <p style="color: red;">어제의 그림일기가 없습니다. 대화를 통해 일기를 작성해보세요!</p>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="menu">
+            {% if 'username' in session %}
+                <form method="get" action="{{ url_for('main.select') }}">
+                    <button type="submit" class="chat-button">도란이와 대화하기</button>
                 </form>
                 <form method="get" action="{{ url_for('main.calendar_view') }}">
-                    <button type="submit">View Calendar</button>
+                    <button type="submit" class="diary-button">그림일기장</button>
                 </form>
-                <form method="get" action="{{ url_for('main.cognitive_test') }}">
-                    <button type="submit">인지기능검사</button>
-                </form>
-                <form method="get" action="{{ url_for('main.cognitive_result') }}">
-                    <button type="submit">결과 보기</button>
-                </form>
-                <form method="post" action="{{ url_for('main.logout') }}">
-                    <button type="submit">Logout</button>
-                </form>
-            </div>
-        {% else %}
-            <div class="menu">
+            {% else %}
                 <form method="get" action="{{ url_for('main.login') }}">
                     <button type="submit">Login</button>
                 </form>
                 <form method="get" action="{{ url_for('main.signup') }}">
                     <button type="submit">Sign Up</button>
                 </form>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
+        <div class="empty-space"></div>
     </div>
 </body>
 </html>

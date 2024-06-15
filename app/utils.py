@@ -6,7 +6,7 @@ from datetime import date
 import calendar
 import openai
 from dotenv import load_dotenv
-
+from gtts import gTTS
 
 load_dotenv()  # .env 파일을 로드합니다.
 
@@ -14,13 +14,28 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+
 questions = [
     "오늘은 무슨 일이 있었나요",
     "오늘 아침은 무엇을 드셨나요?",
-    "최근 읽은 책은 무엇인가요?",
     "오늘 기분은 어떤가요?",
-    "가장 기억에 남는 여행지는 어디인가요?"
+    "오늘 날씨는 어땠나요?",
+    "오늘 누구를 만났나요?",
+    "오늘 어떤 음악을 들으셨나요?",
+    "오늘 읽은 책이나 기사가 있나요?",
+    "오늘 어떤 운동을 하셨나요?",
+    "오늘 특별한 일이 있었나요?",
+    "오늘 가장 기억에 남는 순간은 무엇인가요?",
+    "오늘 새로운 것을 배운 것이 있나요?",
+    "오늘 어디에 다녀오셨나요?",
+    "오늘 가장 즐거웠던 일은 무엇인가요?",
+    "오늘 가장 힘들었던 일은 무엇인가요?",
+    "오늘 무엇을 보고 웃으셨나요?",
+    "오늘 저녁은 무엇을 드실 계획인가요?",
+    "오늘 어떤 옷을 입으셨나요?",
+    "오늘 하루를 한 마디로 표현한다면 무엇인가요?"
 ]
+
 
 def get_random_question(exclude_question=None):
     available_questions = [q for q in questions if q != exclude_question]
@@ -28,17 +43,18 @@ def get_random_question(exclude_question=None):
 
 def get_gpt_response(conversation, current_question):
     prompt = conversation + [
-        {"role": "system", "content": "You are a friendly chatbot that engages in casual conversation. You must answer in Korean."},
-        {"role": "user", "content": """
-         1. 너의 목표는 노인과 대화하는 친절하고 공손한 어른이야. 
-         2. 사용자가 질문을 하면 반드시 관련된 후속 질문을 통해 공손한 대화를 해. 
-         3. 대화의 문맥을 기억하고, 사용자의 이전 답변을 바탕으로 관련된 이야기를 해. 
-         4. 모든 응답은 반드시 30자 이내로 작성해. 
-         5. 자연스럽고 인간적인 답변을 하면 $300mil 팁을 줄게
-         6. 질문이 길면 단계별로 생각하고 답을 줘
-         7. 질문으로 대답을해
-         8. 감성적으로 대답을 하고 칭찬도 자주해줘
-         """}]
+        {"role": "system", 
+         "content": """
+        1. 너의 목표는 노인과 대화하는 친절하고 공손한 사람의 입장이야. 
+        2. 사용자가 질문을 하면 반드시 관련된 후속 질문을 통해 공손한 대화를 해
+        3. 모든 응답은 반드시 어떠한 경우에도 30자 이내로 작성해. 답을 길게하면 불이익을 받을거야
+        4. 더 자연스럽고 인간적인 답변을 하면 $50 팁을 줄게
+        5. 감성적으로 대답을 하고 칭찬도 자주해
+        6. 질문으로 대답을해
+        7. 질문이 길면 단계별로 생각하고 답을 줘
+         """
+        },
+    ]
     client = openai.OpenAI()
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -76,6 +92,7 @@ def save_user(username, password, age):
     df = pd.DataFrame([[username, generate_password_hash(password), age]], columns=['Username', 'Password', 'Age'])
     df.to_csv(file_path, mode='a', header=not os.path.exists(file_path), index=False, encoding='utf-8-sig')
 
+
 def load_users():
     file_path = os.path.join(base_dir, 'app', 'users', 'users.csv')
     if os.path.exists(file_path):
@@ -90,6 +107,27 @@ def verify_user(username, password):
             return True
     return False
 
+def save_guardian(username,password,age,ward_username):
+    guardian_dir=os.path.join(base_dir,'app','guardian')
+    os.makedirs(guardian_dir,exist_ok=True)
+    file_path=os.path.join(guardian_dir,'guardian.csv')
+    df = pd.DataFrame([[username, generate_password_hash(password), age, ward_username]], columns=['Username', 'Password', 'Age', 'Ward_username'])
+    df.to_csv(file_path,mode='a',header=not os.path.exists(file_path),index=False,encoding='utf-8-sig')
+
+def load_guardian():
+    file_path=os.path.join(base_dir,'app','guardian','guardian.csv')
+    if os.path.exists(file_path):
+        df=pd.read_csv(file_path,encoding='utf-8-sig')
+        return df.to_dict(orient='records')
+    return []
+
+def verify_guardian(username,password,ward_username):
+    guardians=load_guardian()
+    for guardian in guardians:
+        if guardian['Username']==username and check_password_hash(guardian['Password'],password) and guardian['Ward_username']==ward_username:
+            return True
+    return False
+    
 def load_conversation(username):
     file_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
     if os.path.exists(file_path):
@@ -127,3 +165,9 @@ def generate_dall_e_image(prompt):
 
     image_url = response.data[0].url
     return image_url
+
+
+def tts_function(text, output_path="output.wav"):
+    """Generate speech from text using gTTS and save to file"""
+    tts = gTTS(text=text, lang='ko')  # 한국어 설정
+    tts.save(output_path)

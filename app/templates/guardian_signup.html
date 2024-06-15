@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Guardian Signup</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body {
@@ -21,7 +21,6 @@
             background-color: #fff;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
         }
         form {
             display: flex;
@@ -34,7 +33,7 @@
             border: 1px solid #ddd;
             border-radius: 5px;
         }
-        form button, .guardian-button {
+        form button {
             padding: 10px;
             font-size: 16px;
             color: #fff;
@@ -43,22 +42,21 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        .guardian-button {
-            margin-bottom: 10px;
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Login</h2>
-        <form method="POST" action="{{ url_for('main.login') }}">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required><br>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required><br>
-            <button class="guardian-button" onclick="location.href='{{ url_for('main.guardian_login') }}'">보호자</button>
-            <button type="submit">Login</button>
-        </form>
-    </div>
+    <h1>Guardian Signup</h1>
+    <div>
+    <form method="POST">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required><br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br><br>
+        <label for="ward_username">Ward Username:</label>
+        <input type="text" id="ward_username" name="ward_username" required><br><br>
+        <button type="submit">Signup</button>
+    </form>
+    <a href="{{ url_for('main.guardian_login') }}">Already have an account? Login here</a>
+</div>
 </body>
 </html>

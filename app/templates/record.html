@@ -10,34 +10,70 @@
             font-family: Arial, sans-serif;
             background-color: #f5f5f5;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-direction: column;
             min-height: 100vh;
         }
         .container {
-            width: 100%;
-            max-width: 600px;
+            width: 360px;
+            height: 800px;
             background-color: #fff;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            position: relative;
+        }
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .back-button {
+            position: absolute;
+            left: -10px;
+        }
+        .back-button img {
+            height: 30px; /* 뒤로가기 버튼 크기 조정 */
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
         }
         h1 {
             font-size: 24px;
             text-align: center;
-            margin-bottom: 20px;
-        }
-        p {
-            line-height: 1.6;
+            margin-bottom: 10px;
+            margin-top: 40px;
         }
         .diary-content {
             margin-top: 20px;
+            text-align: center;
+            width: 330px;
+            height: 200px; /* 높이 고정 */
+            overflow-y: auto; /* 내용이 넘칠 경우 스크롤 */
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+            position: relative;
         }
-        .generate-button {
-            margin-top: 20px;
+        .diary-content p {
+            line-height: 1.6;
+            text-align: left;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .generate-button, .end-button {
             padding: 10px 20px;
             background-color: #007bff;
             color: #fff;
@@ -46,24 +82,64 @@
             cursor: pointer;
             font-size: 16px;
         }
+        .generate-button {
+            margin-top: 20px;
+        }
+        .end-button-container {
+            width: 100%;
+            background-color: #fff; /* 버튼 주변 흰색 배경 */
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            position: absolute;
+            bottom: 20px;
+        }
+        .end-button {
+            background-color: #fff; /* 버튼 배경 흰색 */
+            border-radius: 5px;
+        }
+        .end-button img {
+            width: 100%; /* 원하는 크기로 조정 */
+        }
+        .diary-image {
+            width: 330px;
+            height: 330px;
+            margin-bottom: 5px;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>{{ date }} 일기</h1>
-        {% if image_url %}
-            <img src="{{ image_url }}" alt="Generated Image" style="width:100%; height:auto; margin-bottom: 20px;">
-        {% endif %}
-        <div class="diary-content">
-            {% if diary_entry %}
-                <p>{{ diary_entry }}</p>
-            {% else %}
-                <p>일기가 아직 생성되지 않았습니다.</p>
-            {% endif %}
+        <div class="header">
+            <a href="javascript:history.back()" class="back-button">
+                <img src="{{ url_for('static', filename='images/back.png') }}" alt="뒤로가기">
+            </a>
+            <div class="title">오늘의 일기</div>
         </div>
-        <form method="post">
-            <button type="submit" class="generate-button">일기 생성</button>
-        </form>
+        <h1>{{ date }}</h1>
+        {% if diary_entry and image_url %}
+            <img src="{{ image_url }}" alt="Generated Image" class="diary-image">
+            <div class="diary-content">
+                <div class="lines">
+                    <p>{{ diary_entry }}</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="diary-content">
+                <div class="lines">
+                    <p>일기가 아직 생성되지 않았습니다.</p>
+                </div>
+            </div>
+            <form method="post">
+                <button type="submit" class="generate-button">일기 생성</button>
+            </form>
+        {% endif %}
+        <div class="end-button-container">
+            <a href="{{ url_for('main.main') }}" class="end-button">
+                <img src="{{ url_for('static', filename='images/end.png') }}" alt="오늘의 일기 끝!">
+            </a>
+        </div>
     </div>
 </body>
 </html>

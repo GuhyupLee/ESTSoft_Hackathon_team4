@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, send_file
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import os
-from .utils import get_random_question, get_gpt_response, save_response, contains_question, save_user, load_users, verify_user, load_conversation, get_all_dates_in_month, summarize_responses, generate_dall_e_image, base_dir
+from .utils import get_random_question, get_gpt_response, save_response, contains_question, save_user, load_users, verify_user, load_conversation, get_all_dates_in_month, summarize_responses, generate_dall_e_image,save_guardian,load_guardian,verify_guardian, base_dir
 import random
 from .question_data import question_data
-from .question import generate_question, stt_function, tts_function, check_answer, save_question, load_last_question, percentile_for_age_and_score, save_response, load_responses, calculate_average_score
+from .question import generate_question, stt_function, check_answer, save_question, load_last_question, percentile_for_age_and_score, save_response_question, load_responses, calculate_average_score, tts_function
+import requests
 
 main_bp = Blueprint('main', __name__)
 
@@ -17,10 +18,29 @@ state = {
 
 @main_bp.route('/')
 def main():
-    return render_template('main.html')
+    """메인 페이지 렌더링"""
+    yesterday_diary = None
+    if 'username' in session:
+        username = session['username']
+        yesterday_date = (datetime.now() - timedelta(1)).strftime('%Y-%m-%d')
+        image_filename = f'{yesterday_date}_{username}.png'
+        image_path = os.path.join('app', 'static', 'images', image_filename)
+
+        if os.path.exists(image_path):
+            yesterday_diary = {
+                'image_path': f'images/{image_filename}'
+            }
+
+    return render_template('main.html', yesterday_diary=yesterday_diary)
+
+@main_bp.route('/select')
+def select():
+    """기능 선택 페이지 렌더링"""
+    return render_template('select.html')
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    """로그인 페이지 렌더링 및 로그인 처리"""
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -30,27 +50,58 @@ def login():
             users = load_users()
             for user in users:
                 if user['Username'] == username:
-                    session['age'] = user['Age']
+                    session['age'] = user['Age']  # age를 세션에 저장
                     break
             return redirect(url_for('main.main'))
         else:
             flash('Invalid username or password')
     return render_template('login.html')
 
+@main_bp.route('/guardian_login', methods=['GET', 'POST'])
+def guardian_login():
+    """보호자 로그인 페이지 렌더링 및 로그인 처리"""
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        ward_username = request.form['ward_username']
+        if verify_guardian(username, password, ward_username):
+            session['username'] = username
+            session['role'] = 'guardian'
+            session['ward_username'] = ward_username
+            session['conversation'] = load_conversation(ward_username)
+            guardians = load_guardian()
+            for guardian in guardians:
+                if guardian['Username'] == username:
+                    session['age'] = guardian['Age']  # age를 세션에 저장
+                    break
+            return redirect(url_for('main.main'))
+        else:
+            flash('Invalid username, password, or ward username')
+    return render_template('guardian_login.html')
+
 @main_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
+    """회원가입 페이지 렌더링 및 회원가입 처리"""
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         age = request.form['age']
-        save_user(username, password, age)
-        session['age'] = age
-        flash('Signup successful, please login')
+        account_type=request.form['account_type']
+        if account_type=='guardian':
+            ward_username=request.form['ward_username']
+            save_guardian(username,password,age,ward_username)
+            session['age'] = age  # age를 세션에 저장
+            flash('Guardian signup successful, please login')
+        else:
+            save_user(username, password, age)
+            session['age'] = age  # age를 세션에 저장
+            flash('Signup successful, please login')
         return redirect(url_for('main.login'))
     return render_template('signup.html')
 
 @main_bp.route('/chat', methods=['GET', 'POST'])
 def chat():
+    """챗봇 페이지 렌더링 및 대화 처리"""
     if 'username' not in session:
         return redirect(url_for('main.login'))
 
@@ -100,6 +151,7 @@ def chat():
 
 @main_bp.route('/reset', methods=['POST'])
 def reset():
+    """대화 상태 초기화"""
     session.pop('conversation', None)
     session.pop('current_question', None)
     session.pop('last_interaction_date', None)
@@ -107,6 +159,7 @@ def reset():
 
 @main_bp.route('/logout', methods=['POST'])
 def logout():
+    """로그아웃 처리"""
     session.pop('username', None)
     session.pop('conversation', None)
     session.pop('current_question', None)
@@ -115,6 +168,7 @@ def logout():
 
 @main_bp.route('/cognitive_test')
 def cognitive_test():
+    """인지 테스트 페이지 렌더링"""
     if 'username' not in session:
         return redirect(url_for('main.login'))
     return render_template('cognitive_test.html')
@@ -152,7 +206,7 @@ def answer_question():
         response_text = f"틀렸습니다. 정답은 {question_data[question]}입니다."
     
     # 기록 저장
-    save_response(session['username'], question, user_answer, is_correct)
+    save_response_question(session['username'], question, user_answer, is_correct)
     
     tts_function(response_text)
     accuracy = state["correct_answers"] / state["total_questions"] * 100
@@ -168,11 +222,13 @@ def get_answer_audio():
 
 @main_bp.route('/accuracy')
 def get_accuracy():
+    """정확도 가져오기"""
     accuracy = state["correct_answers"] / state["total_questions"] * 100 if state["total_questions"] > 0 else 0
     return jsonify({"accuracy": accuracy})
 
 @main_bp.route('/accuracy_data')
 def get_accuracy_data():
+    """정확도 데이터 가져오기"""
     return jsonify(state["accuracy_data"])
 
 @main_bp.route('/user_data')
@@ -185,6 +241,14 @@ def get_user_data():
         "Age": session['age']
     }
     return jsonify(user_data)
+
+@main_bp.route('/start_random')
+def start_random_question():
+    """랜덤 질문 시작"""
+    question = random.choice(list(question_data.keys()))  # question_data에서 랜덤 질문 선택
+    tts_function(question)  # TTS 음성 파일 생성
+    save_question(question)  # 현재 질문 저장
+    return send_file("output.mp3", mimetype="audio/mpeg", as_attachment=True, download_name="output.mp3")
 
 @main_bp.route('/percentile')
 def get_percentile():
@@ -202,6 +266,11 @@ def calendar_view(year, month):
     if 'username' not in session:
         return redirect(url_for('main.login'))
 
+    if session.get('role') == 'guardian':
+        username = session.get('ward_username')
+    else:
+        username = session['username']
+
     if year is None or month is None:
         now = datetime.now()
         year = now.year
@@ -212,7 +281,7 @@ def calendar_view(year, month):
     data_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
     if os.path.exists(data_path):
         df = pd.read_csv(data_path, encoding='utf-8-sig')
-        recorded_dates = df[df['User'] == session['username']]['Date'].unique().tolist()
+        recorded_dates = df[df['User'] == username]['Date'].unique().tolist()  # Use ward's username
     else:
         recorded_dates = []
 
@@ -227,24 +296,78 @@ def calendar_view(year, month):
     return render_template('calendar.html', current_year=current_year, current_month=current_month, dates=current_month_dates, recorded_dates=recorded_dates,
                            prev_year=prev_year, prev_month=prev_month, next_year=next_year, next_month=next_month)
 
+
 @main_bp.route('/record/<date>', methods=['GET', 'POST'])
 def record(date):
     if 'username' not in session:
         return redirect(url_for('main.login'))
 
-    if request.method == 'POST':
-        data_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
+    if session.get('role') == 'guardian':
+        username = session.get('ward_username')
+    else:
+        username = session['username']
+
+    data_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
+
+    # Load or create CSV file
+    if os.path.exists(data_path):
         df = pd.read_csv(data_path, encoding='utf-8-sig')
-        user_records = df[(df['Date'] == date) & (df['User'] == session['username'])]
+        if 'Image_Path' not in df.columns:
+            df['Image_Path'] = None
+        if 'Diary_Entry' not in df.columns:
+            df['Diary_Entry'] = None
+    else:
+        df = pd.DataFrame(columns=['User', 'Date', 'Response', 'Image_Path', 'Diary_Entry'])
+        df.to_csv(data_path, index=False, encoding='utf-8-sig')
+
+    if request.method == 'POST':  # When diary entry is created
+        user_records = df[(df['Date'] == date) & (df['User'] == username)]
 
         responses = user_records['Response'].tolist()
         diary_entry = summarize_responses(responses)
         image_prompt = f"초등학생 그림일기 느낌의 그림을 생성해 주세요. 내용: {diary_entry}"
         image_url = generate_dall_e_image(image_prompt)
 
+        # Save the image
+        image_save_dir = os.path.join(base_dir, 'app', 'static', 'images')
+        os.makedirs(image_save_dir, exist_ok=True)
+        
+        image_data = requests.get(image_url).content
+        image_path = os.path.join(image_save_dir, f"{date}_{username}.png")
+        with open(image_path, 'wb') as handler:
+            handler.write(image_data)
+
+        # Save diary entry and image path to CSV
+        if user_records.empty:
+            new_record = pd.DataFrame([{
+                'User': username,
+                'Date': date,
+                'Response': None,
+                'Diary_Entry': diary_entry,
+                'Image_Path': image_path
+            }])
+            df = pd.concat([df, new_record], ignore_index=True)
+        else:
+            df.loc[user_records.index, 'Diary_Entry'] = diary_entry
+            df.loc[user_records.index, 'Image_Path'] = image_path
+
+        df.to_csv(data_path, index=False, encoding='utf-8-sig')
+
         return render_template('record.html', date=date, diary_entry=diary_entry, image_url=image_url)
 
-    return render_template('record.html', date=date)
+    user_records = df[(df['Date'] == date) & (df['User'] == username)]
+    diary_entry = user_records['Diary_Entry'].iloc[0] if not user_records['Diary_Entry'].isnull().all() else None
+    image_path = user_records['Image_Path'].iloc[0] if not user_records['Image_Path'].isnull().all() else None
+    image_url = url_for('static', filename=f'images/{os.path.basename(image_path)}') if image_path else None
+
+    return render_template('record.html', date=date, diary_entry=diary_entry, image_url=image_url)
+
+@main_bp.route('/tts', methods=['POST'])
+def tts():
+    """텍스트를 음성으로 변환하여 파일로 전송"""
+    text = request.json.get('text')
+    tts_function(text)
+    return send_file("output.mp3", mimetype="audio/mpeg", as_attachment=True, download_name="output.mp3")
 
 @main_bp.route('/results_data')
 def get_results_data():

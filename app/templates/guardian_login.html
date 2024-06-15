@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>기억나래</title>
+    <title>보호자 로그인</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body {
@@ -28,16 +28,16 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             box-sizing: border-box;
             padding: 20px;
-            position: relative; /* Add this line */
+            position: relative;
         }
         .back-button {
-            position: absolute; /* Add this line */
-            top: 20px; /* Adjust as needed */
-            left: 20px; /* Adjust as needed */
+            position: absolute;
+            top: 20px;
+            left: 20px;
             cursor: pointer;
         }
         .back-button img {
-            height: 30px; /* Adjust as needed */
+            height: 30px;
         }
         h1 {
             margin-top: 120px;
@@ -52,7 +52,7 @@
             flex-grow: 1;
             justify-content: center;
         }
-        form input, form select {
+        form input {
             width: 80%;
             margin-bottom: 15px;
             padding: 15px;
@@ -61,8 +61,8 @@
             border-radius: 10px;
             box-sizing: border-box;
         }
-        form input::placeholder, form select {
-            color: #000; /* Placeholder text color set to black */
+        form input::placeholder {
+            color: #000;
             font-weight: bold;
         }
         form button {
@@ -80,36 +80,19 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <a href="javascript:history.back()" class="back-button">
             <img src="{{ url_for('static', filename='images/back.png') }}" alt="뒤로가기">
         </a>
         <h1>기억 나래</h1>
-        <form method="post">
-            <input type="text" name="username" required placeholder="아이디">
-            <input type="password" name="password" required placeholder="비밀번호">
-            <input type="number" name="age" required placeholder="나이">
-            <input type="text" name="ward_username" placeholder="Ward's Username" id="ward_username" style="display: none;">
-            <select name="account_type" id="account_type" required>
-                <option value="regular">사용자</option>
-                <option value="guardian">보호자</option>
-            </select>
-            <button type="submit">회원 가입</button>
+        <form method="POST" action="{{ url_for('main.guardian_login') }}">
+            <input type="text" id="username" name="username" placeholder="아이디" required>
+            <input type="password" id="password" name="password" placeholder="비밀번호" required>
+            <input type="text" id="ward_username" name="ward_username" placeholder="피보호자 아이디" required>
+            <button type="submit">로그인</button>
         </form>
-        {% if request.method == 'POST' %}
-        <p>{{ get_flashed_messages() }}</p>
-        {% endif %}
     </div>
-    <script>
-        document.getElementById('account_type').addEventListener('change', function () {
-            var wardInput = document.getElementById('ward_username');
-            if (this.value === 'guardian') {
-                wardInput.style.display = 'block';
-            } else {
-                wardInput.style.display = 'none';
-            }
-        });
-    </script>
 </body>
 </html>
