@@ -366,6 +366,39 @@ def calendar_view(year, month):
     return render_template('calendar.html', current_year=current_year, current_month=current_month, dates=current_month_dates, recorded_dates=recorded_dates,
                            prev_year=prev_year, prev_month=prev_month, next_year=next_year, next_month=next_month)
 
+@main_bp.route('/view_ward_diary', defaults={'year': None, 'month': None})
+@main_bp.route('/view_ward_diary/<int:year>/<int:month>')
+def view_ward_diary(year,month):
+    if 'username' not in session or session.get('role') != 'guardian':
+        return redirect(url_for('main.login'))
+
+    ward_username = session.get('ward_username')
+
+    if year is None or month is None:
+        now = datetime.now()
+        year = now.year
+        month = now.month
+
+    current_month_dates = get_all_dates_in_month(year, month)
+    
+    data_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
+    if os.path.exists(data_path):
+        df = pd.read_csv(data_path, encoding='utf-8-sig')
+        recorded_dates = df[df['User'] == ward_username]['Date'].unique().tolist()  # Use ward's username
+    else:
+        recorded_dates = []
+
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    next_month = month + 1 if month < 12 else 1
+    next_year = year if month < 12 else year + 1
+
+    current_month = month
+    current_year = year
+
+    return render_template('calendar.html', current_year=current_year, current_month=current_month, dates=current_month_dates, recorded_dates=recorded_dates,
+                           prev_year=prev_year, prev_month=prev_month, next_year=next_year, next_month=next_month)
+
 @main_bp.route('/record/<date>', methods=['GET', 'POST'])
 def record(date):
     if 'username' not in session:
@@ -488,3 +521,28 @@ def get_results_data():
         "average_questions_per_day": average_questions_per_day
     }
     return jsonify(data)
+
+@main_bp.route('/guardian_cognitive_result')
+def guardian_cognitive_result():
+    if 'username' not in session or session.get('role') != 'guardian':
+        return redirect(url_for('main.login'))
+
+    ward_username = session.get('ward_username')
+
+    # Load cognitive test results for the ward
+    responses = load_responses(ward_username)
+    total_questions = len(responses)
+    correct_answers = sum(1 for response in responses if response['is_correct'])
+    accuracy = (correct_answers / total_questions) * 100 if total_questions > 0 else 0
+
+    age = int(session.get('age', 30))  # Assuming guardian's age is also stored in session
+    percentile = percentile_for_age_and_score(age, accuracy)
+
+    data = {
+        "total_questions": total_questions,
+        "correct_answers": correct_answers,
+        "accuracy": round(accuracy, 2),
+        "percentile": round(percentile, 2),
+    }
+
+    return render_template('guardian_cognitive_result.html', data=data, ward_username=ward_username)

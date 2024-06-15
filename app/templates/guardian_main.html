@@ -86,18 +86,34 @@
     <div class="container">
         <div class="header">
             <img src="{{ url_for('static', filename='images/1_main_logo.png') }}" alt="기억나래 로고">
-            <form method="POST" action="{{ url_for('main.logout') }}" class="logout-form">
-                <button type="submit">로그아웃</button>
-            </form>
+            {% if 'username' in session %}
+                <form method="POST" action="{{ url_for('main.logout') }}" class="logout-form">
+                    <button type="submit">로그아웃</button>
+                </form>
+            {% endif %}
         </div>
-        <div class="welcome-message">
-            <p>반가워요, {{ session['username'] }}님!<br>피보호자의 기록을 확인하세요 :D</p>
-        </div>
-        <div class="menu">
-            <form method="get" action="{{ url_for('main.calendar_view') }}">
-                <button type="submit">기록 확인하기</button>
-            </form>
-        </div>
+        {% if 'username' in session %}
+            <div class="welcome-message">
+                <p>반가워요, {{ session['username'] }}님!<br>피보호자의 기록을 확인하세요 :D</p>
+            </div>
+            <div class="menu">
+                <form method="get" action="{{ url_for('main.view_ward_diary') }}">
+                    <button type="submit">피보호자의 그림일기 보기</button>
+                </form>
+                <form method="get" action="{{ url_for('main.guardian_cognitive_result') }}">
+                    <button type="submit">피보호자의 인지능력 테스트 결과 보기</button>
+                </form>
+            </div>
+        {% else %}
+            <div class="menu">
+                <form method="get" action="{{ url_for('main.guardian_login') }}">
+                    <button type="submit">Login</button>
+                </form>
+                <form method="get" action="{{ url_for('main.signup') }}">
+                    <button type="submit">Sign Up</button>
+                </form>
+            </div>
+        {% endif %}
     </div>
 </body>
 </html>
