@@ -41,17 +41,19 @@ def get_random_question(exclude_question=None):
     available_questions = [q for q in questions if q != exclude_question]
     return random.choice(available_questions) if available_questions else random.choice(questions)
 
+#          4. 모든 응답은 반드시 어떠한 경우에도 30자 이내로 작성해. 답을 길게하면 불이익을 받을거야
+
 def get_gpt_response(conversation, current_question):
     prompt = conversation + [
         {"role": "system", 
          "content": """
-        1. 너의 목표는 노인과 대화하는 친절하고 공손한 사람의 입장이야. 
-        2. 사용자가 질문을 하면 반드시 관련된 후속 질문을 통해 공손한 대화를 해
-        3. 모든 응답은 반드시 어떠한 경우에도 30자 이내로 작성해. 답을 길게하면 불이익을 받을거야
-        4. 더 자연스럽고 인간적인 답변을 하면 $50 팁을 줄게
-        5. 감성적으로 대답을 하고 칭찬도 자주해
-        6. 질문으로 대답을해
-        7. 질문이 길면 단계별로 생각하고 답을 줘
+         1. 너의 목표는 노인과 대화하는 친절하고 공손한 사람의 입장이야. 
+         2. 사용자가 질문을 하면 반드시 관련된 후속 질문을 통해 공손한 대화를 해. 
+         3. 대화의 문맥을 기억하고, 사용자의 이전 답변을 바탕으로 관련된 이야기를 해. 
+         4. 더 자연스럽고 인간적인 답변을 하면 $50 팁을 줄게
+         5. 감성적으로 대답을 하고 칭찬도 자주해 
+         6. 질문이 길면 단계별로 생각하고 답을 줘
+         7. 가능한 질문으로 대답을해 
          """
         },
     ]
@@ -130,6 +132,8 @@ def contains_question(text):
 def generate_dall_e_image(prompt):
     # DALL-E 모델을 사용하여 이미지를 생성하고 URL을 반환합니다.
     client = openai.OpenAI()
+
+    prompt += "\n\n 풍경이나 사물 위주로 그려줘"
 
     image_params = {
         "model": "dall-e-3",  # 사용할 모델 지정
