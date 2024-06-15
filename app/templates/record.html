@@ -51,19 +51,19 @@
 <body>
     <div class="container">
         <h1>{{ date }} 일기</h1>
-        {% if image_url %}
+        {% if diary_entry and image_url %}
             <img src="{{ image_url }}" alt="Generated Image" style="width:100%; height:auto; margin-bottom: 20px;">
-        {% endif %}
-        <div class="diary-content">
-            {% if diary_entry %}
+            <div class="diary-content">
                 <p>{{ diary_entry }}</p>
-            {% else %}
+            </div>
+        {% else %}
+            <div class="diary-content">
                 <p>일기가 아직 생성되지 않았습니다.</p>
-            {% endif %}
-        </div>
-        <form method="post">
-            <button type="submit" class="generate-button">일기 생성</button>
-        </form>
+            </div>
+            <form method="post">
+                <button type="submit" class="generate-button">일기 생성</button>
+            </form>
+        {% endif %}
     </div>
 </body>
 </html>

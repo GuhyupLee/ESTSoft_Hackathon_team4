@@ -6,7 +6,7 @@ from datetime import date
 import calendar
 import openai
 from dotenv import load_dotenv
-
+from gtts import gTTS
 
 load_dotenv()  # .env 파일을 로드합니다.
 
@@ -14,29 +14,32 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+
 questions = [
     "오늘은 무슨 일이 있었나요",
     "오늘 아침은 무엇을 드셨나요?",
-    "최근 읽은 책은 무엇인가요?",
     "오늘 기분은 어떤가요?",
-    "가장 기억에 남는 여행지는 어디인가요?"
+    "오늘 날씨는 어땠나요?",
+    "오늘 누구를 만났나요?",
+    "오늘 어떤 음악을 들으셨나요?",
+    "오늘 읽은 책이나 기사가 있나요?",
+    "오늘 어떤 운동을 하셨나요?",
+    "오늘 특별한 일이 있었나요?",
+    "오늘 가장 기억에 남는 순간은 무엇인가요?",
+    "오늘 새로운 것을 배운 것이 있나요?",
+    "오늘 어디에 다녀오셨나요?",
+    "오늘 가장 즐거웠던 일은 무엇인가요?",
+    "오늘 가장 힘들었던 일은 무엇인가요?",
+    "오늘 무엇을 보고 웃으셨나요?",
+    "오늘 저녁은 무엇을 드실 계획인가요?",
+    "오늘 어떤 옷을 입으셨나요?",
+    "오늘 하루를 한 마디로 표현한다면 무엇인가요?"
 ]
+
 
 def get_random_question(exclude_question=None):
     available_questions = [q for q in questions if q != exclude_question]
     return random.choice(available_questions) if available_questions else random.choice(questions)
-
-### 우리의 context 에서 프롬프트 좋은 결과 얻기
-# 1. 청중 설정 (누구랑 대화하는지)
-# 2. GPT 의 role 설정 (자신이 어떤 역할인지)
-# 3. 반드시, 무조건, 등 확신을 주는 언어 쓰기
-# 4. 팁을 준다고 하기
-# 5. 단계별 생각을 시키기
-# 6. 인간적인 방식으로 답을 하라고 하기
-# 7. 임무, 목표 등을 설정해주기
-# 8. 질문시키기
-# ###
-
 
 def get_gpt_response(conversation, current_question):
     prompt = conversation + [
@@ -141,3 +144,9 @@ def generate_dall_e_image(prompt):
 
     image_url = response.data[0].url
     return image_url
+
+
+def tts_function(text, output_path="output.wav"):
+    """Generate speech from text using gTTS and save to file"""
+    tts = gTTS(text=text, lang='ko')  # 한국어 설정
+    tts.save(output_path)

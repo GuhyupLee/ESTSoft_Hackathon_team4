@@ -17,8 +17,8 @@
             height: 100vh;
         }
         .container {
-            width: 400px;
-            height: 900px;
+            width: 360px;
+            height: 800px;
             background-color: #fff;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -195,10 +195,19 @@
         });
 
         // TTS 기능
-        function speak(text) {
-            var speech = new SpeechSynthesisUtterance(text);
-            speech.lang = "ko-KR"; // 한국어로 설정
-            window.speechSynthesis.speak(speech);
+        async function speak(text) {
+            const response = await fetch('{{ url_for('main.tts')}}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: text })
+            });
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.play();
         }
 
         // 가장 최근의 시스템 메시지를 음성으로 읽어줌

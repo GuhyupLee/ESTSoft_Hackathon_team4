@@ -1,13 +1,15 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, send_file
-from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, send_file 
+from datetime import datetime, timedelta
 import pandas as pd
 import os
-import openai
 from .utils import get_random_question, get_gpt_response, save_response, contains_question, save_user, load_users, verify_user, load_conversation, get_all_dates_in_month, summarize_responses, generate_dall_e_image, base_dir
-import random
-import csv
 from .question_data import question_data
 from .question import generate_question, stt_function, tts_function, check_answer, save_question, load_last_question
+import requests  
+import openai
+import random
+import csv
+from .utils import tts_function
 
 main_bp = Blueprint('main', __name__)
 
@@ -18,10 +20,33 @@ state = {
     "accuracy_data": []
 }
 
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from datetime import datetime, timedelta
+import os
+
+main_bp = Blueprint('main', __name__)
+
 @main_bp.route('/')
 def main():
     """메인 페이지 렌더링"""
-    return render_template('main.html')
+    yesterday_diary = None
+    if 'username' in session:
+        username = session['username']
+        yesterday_date = (datetime.now() - timedelta(1)).strftime('%Y-%m-%d')
+        image_filename = f'{yesterday_date}_{username}.png'
+        image_path = os.path.join('app', 'static', 'images', image_filename)
+
+        if os.path.exists(image_path):
+            yesterday_diary = {
+                'image_path': f'images/{image_filename}'
+            }
+
+    return render_template('main.html', yesterday_diary=yesterday_diary)
+
+@main_bp.route('/select')
+def select():
+    """기능 선택 페이지 렌더링"""
+    return render_template('select.html')
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -220,15 +245,26 @@ def calendar_view(year, month):
     return render_template('calendar.html', current_year=current_year, current_month=current_month, dates=current_month_dates, recorded_dates=recorded_dates,
                            prev_year=prev_year, prev_month=prev_month, next_year=next_year, next_month=next_month)
 
-# 기록 보기 및 일기 생성 라우트
 @main_bp.route('/record/<date>', methods=['GET', 'POST'])
 def record(date):
+    """특정 날짜의 기록 페이지 렌더링 및 일기 생성"""
     if 'username' not in session:
         return redirect(url_for('main.login'))
 
-    if request.method == 'POST':  # 일기 생성 요청 시
-        data_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
+    data_path = os.path.join(base_dir, 'app', 'data', 'responses.csv')
+
+    # CSV 파일을 로드하거나, 파일이 없으면 새로운 파일을 생성합니다.
+    if os.path.exists(data_path):
         df = pd.read_csv(data_path, encoding='utf-8-sig')
+        if 'Image_Path' not in df.columns:
+            df['Image_Path'] = None
+        if 'Diary_Entry' not in df.columns:
+            df['Diary_Entry'] = None
+    else:
+        df = pd.DataFrame(columns=['User', 'Date', 'Response', 'Image_Path', 'Diary_Entry'])
+        df.to_csv(data_path, index=False, encoding='utf-8-sig')
+
+    if request.method == 'POST':  # 일기 생성 요청 시
         user_records = df[(df['Date'] == date) & (df['User'] == session['username'])]
 
         responses = user_records['Response'].tolist()
@@ -236,6 +272,45 @@ def record(date):
         image_prompt = f"초등학생 그림일기 느낌의 그림을 생성해 주세요. 내용: {diary_entry}"
         image_url = generate_dall_e_image(image_prompt)
 
+        # 이미지 저장 디렉토리 설정
+        image_save_dir = os.path.join(base_dir, 'app', 'static', 'images')
+        os.makedirs(image_save_dir, exist_ok=True)
+        
+        # 이미지 다운로드 및 저장
+        image_data = requests.get(image_url).content
+        image_path = os.path.join(image_save_dir, f"{date}_{session['username']}.png")
+        with open(image_path, 'wb') as handler:
+            handler.write(image_data)
+
+        # 이미지 경로와 사용자 정보를 CSV에 저장
+        if user_records.empty:
+            new_record = pd.DataFrame([{
+                'User': session['username'],
+                'Date': date,
+                'Response': None,
+                'Diary_Entry': diary_entry,
+                'Image_Path': image_path
+            }])
+            df = pd.concat([df, new_record], ignore_index=True)
+        else:
+            df.loc[user_records.index, 'Diary_Entry'] = diary_entry
+            df.loc[user_records.index, 'Image_Path'] = image_path
+
+        df.to_csv(data_path, index=False, encoding='utf-8-sig')
+
         return render_template('record.html', date=date, diary_entry=diary_entry, image_url=image_url)
 
-    return render_template('record.html', date=date)
+    user_records = df[(df['Date'] == date) & (df['User'] == session['username'])]
+    diary_entry = user_records['Diary_Entry'].iloc[0] if not user_records['Diary_Entry'].isnull().all() else None
+    image_path = user_records['Image_Path'].iloc[0] if not user_records['Image_Path'].isnull().all() else None
+    image_url = url_for('static', filename=f'images/{os.path.basename(image_path)}') if image_path else None
+
+    return render_template('record.html', date=date, diary_entry=diary_entry, image_url=image_url)
+
+@main_bp.route('/tts', methods=['POST'])
+def tts():
+    """텍스트를 음성으로 변환하여 파일로 전송"""
+    text = request.json.get('text')
+    output_path = "output.wav"
+    tts_function(text, output_path)
+    return send_file(output_path, mimetype='audio/wav')
