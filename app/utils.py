@@ -153,6 +153,8 @@ def generate_dall_e_image(prompt):
     # DALL-E 모델을 사용하여 이미지를 생성하고 URL을 반환합니다.
     client = openai.OpenAI()
 
+    prompt += "\n\n Create the above content in English, in picture-diary format. Focus drawing on the background and objects."
+
     image_params = {
         "model": "dall-e-3",  # 사용할 모델 지정
         "prompt": prompt,
