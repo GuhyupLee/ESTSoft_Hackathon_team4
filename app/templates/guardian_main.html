@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>보호자 메인 페이지</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 360px;
+            height: 800px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            padding: 20px;
+            position: relative;
+        }
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header img {
+            max-width: 80%;
+            height: 20px;
+            margin-left: 0;
+        }
+        .logout-form {
+            margin-left: auto;
+        }
+        .logout-form button {
+            background: none;
+            border: none;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .welcome-message {
+            text-align: center;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .menu button {
+            width: 80%;
+            padding: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #000;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .menu button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='images/1_main_logo.png') }}" alt="기억나래 로고">
+            {% if 'username' in session %}
+                <form method="POST" action="{{ url_for('main.logout') }}" class="logout-form">
+                    <button type="submit">로그아웃</button>
+                </form>
+            {% endif %}
+        </div>
+        {% if 'username' in session %}
+        <div class="welcome-message">
+            <p>반가워요, {{ session['username'] }}님!<br>{{ward_username}}님의 기록을 확인하세요 :D</p>
+        </div>
+        <div class="menu">
+            <form method="get" action="{{ url_for('main.view_ward_diary') }}">
+                <button type="submit">{{ward_username}}의 그림일기 보기</button>
+            </form>
+            <form method="get" action="{{ url_for('main.guardian_cognitive_result') }}">
+                <button type="submit">{{ward_username}}의 인지능력 테스트 결과 보기</button>
+            </form>
+        </div>
+        {% else %}
+            <div class="menu">
+                <form method="get" action="{{ url_for('main.guardian_login') }}">
+                    <button type="submit">Login</button>
+                </form>
+                <form method="get" action="{{ url_for('main.signup') }}">
+                    <button type="submit">Sign Up</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .outer-container {
+            width: 360px;
+            height: 800px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            position: relative;
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;  /* 백 버튼의 상단 위치 조정 */
+            left: 20px; /* 백 버튼의 왼쪽 위치 조정 */
+        }
+        .back-button img {
+            width: 40px; /* 백 버튼 이미지 크기 조정 */
+        }
+        .header {
+            text-align: center;
+            width: 100%;
+            margin-top: 60px; /* 백 버튼과의 간격 조정 */
+        }
+        .header img {
+            max-width: 100%;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            align-items: center;
+            margin-top: 20px; /* 헤더 이미지와 버튼 간의 간격 조정 */
+        }
+        .menu form {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .menu button {
+            width: 100%;
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+        }
+        .menu button img {
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .menu button img:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="outer-container">
+        <div class="back-button">
+            <a href="javascript:history.back()">
+                <img src="{{ url_for('static', filename='images/back.png') }}" alt="뒤로가기">
+            </a>
+        </div>
+        <div class="header">
+            <img src="{{ url_for('static', filename='images/2_select_button5.png') }}" alt="어떤 추억을 돌아보고 싶으세요?">
+        </div>
+        <div class="menu" style="margin-top: -20px;"> <!-- 헤더 이미지와 버튼 간의 간격 조정 -->
+            <form method="get" action="{{ url_for('main.calendar_view') }}">
+                <button type="submit">
+                    <img src="{{ url_for('static', filename='images/2_select_button3.png') }}" alt="내가 썻던 일기를 다시 보고 싶어">
+                </button>
+            </form>
+            <form method="get" action="{{ url_for('main.cognitive_result') }}">
+                <button type="submit">
+                    <img src="{{ url_for('static', filename='images/2_select_button4.png') }}" alt="내가 풀었던 생각 문제 결과를 보고 싶어">
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

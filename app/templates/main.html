@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기억나래 메인 페이지</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="{{ url_for('static', filename='js/main_result.js') }}"></script>
+    <link rel="preload" href="https://fonts.googleapis.com/css?family=Arial&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <style>
+        /* Global Styles Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .outer-container {
+            width: 360px;
+            height: 800px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .header img {
+            max-width: 80%; /* 줄어든 이미지 크기 */
+            height: 20px;
+            margin-left: 0; /* 맨 왼쪽으로 정렬 */
+        }
+
+        .logout-form {
+            margin-left: auto;
+        }
+
+        .logout-form button {
+            background: none;
+            border: none;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .welcome-message {
+            text-align: left;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .diary {
+            width: 100%;
+            height: 80%;
+            text-align: center;
+        }
+
+        .diary img, .diary p {
+            max-width: 100%;
+            height: 80%;
+            border-radius: 10px;
+            margin-top: 10px;
+            margin-bottom: -50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .diary p {
+            background-color: #f5f5f5;
+            color: red;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .menu form {
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .menu button {
+            height: 100%;
+            width: 100%;
+            border: none;
+            background: none;
+            cursor: pointer;
+            margin-top: -10px;
+        }
+
+        .menu button img {
+            height: 100%;
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .menu button img:hover {
+            transform: scale(1.05);
+        }
+
+        .empty-space {
+            height: 100px;
+        }
+
+        .cognitive-results {
+            width: 100%;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .cognitive-results h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .cognitive-results p {
+            margin: 5px 0;
+        }
+
+        .cognitive-results canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .centered-menu-container {
+            display: flex;
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 50%;
+        }
+
+        .centered-menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .centered-menu form {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .centered-menu button {
+            width: 80%;
+            padding: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #000;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        .centered-menu button:hover {
+            background-color: #a3a3a3;
+        }
+    </style>
+</head>
+<body>
+    <div class="outer-container">
+        {% if 'username' in session %}
+            <div class="header">
+                <img src="{{ url_for('static', filename='images/1_main_logo.png') }}" alt="기억나래 로고">
+                <form method="POST" action="{{ url_for('main.logout') }}" class="logout-form">
+                    <button type="submit">로그아웃</button>
+                </form>
+            </div>
+            <div class="welcome-message">
+                <p>반가워요, {{ session['username'] }}님!<br>오늘도 행복한 하루 되세요 :D</p>
+            </div>
+            <div class="diary">
+                {% if yesterday_diary %}
+                    <img src="{{ url_for('static', filename=yesterday_diary['image_path']) }}" alt="어제 그림일기">
+                {% else %}
+                    <p>어제의 그림일기가 없습니다.<br> 대화를 통해 일기를 작성해보세요!</p>
+                {% endif %}
+            </div>
+            <div class="menu">
+                <form method="get" action="{{ url_for('main.select') }}">
+                    <button type="submit">
+                        <img src="{{ url_for('static', filename='images/1_main_button1.png') }}" alt="도란이와 대화하기">
+                    </button>
+                </form>
+                <form method="get" action="{{ url_for('main.select2') }}">
+                    <button type="submit">
+                        <img src="{{ url_for('static', filename='images/1_main_button2.png') }}" alt="추억 돌아보기">
+                    </button>
+                </form>
+            </div>
+        {% else %}
+            <!-- 로그인하지 않았을 때의 기억나래 텍스트 및 로그인/회원가입 버튼을 상하 가운데에 배치 -->
+            <div class="header">
+                <h2 class="cente\">기억나래</h2>
+            </div>
+            <div class="centered-menu-container">
+                <div class="centered-menu">
+                    <form method="get" action="{{ url_for('main.login') }}">
+                        <button type="submit">로그인</button>
+                    </form>
+                    <form method="get" action="{{ url_for('main.guardian_login') }}">
+                        <button type="submit">보호자 로그인</button>
+                    </form>
+                    <form method="get" action="{{ url_for('main.signup') }}">
+                        <button type="submit">회원가입</button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+        <div class="empty-space"></div>
+    </div>
+</body>
+</html>

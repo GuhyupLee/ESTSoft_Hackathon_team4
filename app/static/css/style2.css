@@ -1,0 +1,88 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    width: 360px;
+    height: 800px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 20px;
+    position: relative;
+}
+
+.back-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+}
+
+.header-content {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.summary {
+    text-align: center;
+}
+
+.progress-circles {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.details {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.circle svg {
+    width: 100px;
+    height: 100px;
+    position: relative;
+}
+
+.circle svg circle {
+    fill: none;
+    stroke-width: 10;
+    transform: translate(5px, 5px);
+    r: 45;
+    cx: 50;
+    cy: 50;
+}
+
+.circle svg circle:nth-child(1) {
+    stroke: #e6e6e6;
+}
+
+.circle svg circle:nth-child(2) {
+    stroke: #3498db;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transition: stroke-dashoffset 0.5s ease;
+}
+
+.circle-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2em;
+    font-weight: bold;
+}

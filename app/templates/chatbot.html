@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 360px;
+            height: 800px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+        }
+        .back-button img {
+            height: 40px; /* 뒤로가기 버튼 크기 조정 */
+        }
+        .exit-button {
+            height: 20px; /* 텍스트 크기 조정 */
+            margin-right: 20px; /* 오른쪽으로 마진 추가 */
+            color: #000; /* 글자 색상 */
+            text-decoration: none; /* 밑줄 제거 */
+            font-weight: bold; /* 글자 굵게 */
+            border: 2px solid #000; /* Adds a 2-pixel solid black border */
+            padding: 5px; /* Adds 5 pixels of padding inside the border */
+        }
+        .character-image {
+            width: 175px;
+            height: 200px;
+            margin: 0 auto;
+            margin-top: 10px;
+        }
+        .chatbox {
+            padding: 0px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 메시지 박스 가운데 정렬 */
+            width: 100%;
+        }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center; /* 메시지 박스 가운데 정렬 */
+            width: 100%;
+            overflow-wrap: break-word; /* 메시지가 컨테이너 밖으로 나가지 않도록 함 */
+        }
+
+        .message p {
+            padding: 20px;
+            border-radius: 20px;
+            width: 100%; /* 메시지 박스 가로 길이를 꽉 차게 */
+            max-width: 320px; /* 컨테이너 밖으로 안 나가도록 최대 너비 설정 */
+            font-size: 24px; /* 글자 크기 키우기 */
+            text-align: center;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif; /* 글씨체 변경 */
+            font-weight: bold; /* 볼드 스타일 적용 */
+        }
+
+        .message.system p {
+            background-color: #e0e0e0;
+            color: #000;
+        }
+        .message.user p {
+            background-color: #e0e0e0;
+            color: #000;
+        }
+        .microphone {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            height: 100px;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
+        .microphone button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            width: 90%;
+            height: 85%;
+            position: relative;
+        }
+        .microphone img {
+            width: 100%;
+            height: 85%;
+        }
+        .microphone span {
+            position: absolute;
+            bottom: 90px; /* 마이크 버튼 위에 위치 */
+            font-size: 20px; /* 글자 크기 늘리기 */
+            color: red;
+            display: none;
+            text-align: center;
+            width: 100%; /* 중앙 정렬 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="javascript:history.back()" class="back-button">
+                <img src="{{ url_for('static', filename='images/back.png') }}" alt="뒤로가기">
+            </a>
+            <a href="{{ url_for('main.calendar_view') }}" class="exit-button">일기 쓰러 가기</a>
+        </div>
+        <img src="{{ url_for('static', filename='images/3_daily_character.png') }}" alt="도란이 캐릭터" class="character-image">
+        <div class="chatbox" id="chatbox">
+            {% for message in conversation[-2:] %}
+                <div class="message {{ message.role }}">
+                    <p>{{ message.content }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="microphone">
+            <span id="recordingStatus">대답 중입니다.</span>
+            <button id="micButton">
+                <img src="{{ url_for('static', filename='images/3_daily_button.png') }}" alt="마이크 버튼">
+            </button>
+        </div>
+    </div>
+    <form id="chatForm" method="post" style="display: none;">
+        <input type="hidden" name="response" id="response">
+    </form>
+    <script>
+        function scrollToBottom() {
+            var chatbox = document.getElementById("chatbox");
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+        window.onload = scrollToBottom;
+
+        // 음성 인식 기능
+        var micButton = document.getElementById("micButton");
+        var responseInput = document.getElementById("response");
+        var recordingStatus = document.getElementById("recordingStatus");
+        var chatForm = document.getElementById("chatForm");
+
+        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        var recognition = new SpeechRecognition();
+
+        var isRecording = false;
+        var recordingTimeout;
+
+        recognition.onresult = function(event) {
+            var transcript = event.results[0][0].transcript;
+            responseInput.value = transcript;
+            chatForm.submit(); // 음성 인식 결과를 제출
+        };
+
+        recognition.onend = function() {
+            isRecording = false;
+            recordingStatus.style.display = 'none';
+            clearTimeout(recordingTimeout);
+        };
+
+        recognition.onerror = function(event) {
+            isRecording = false;
+            recordingStatus.style.display = 'none';
+            clearTimeout(recordingTimeout);
+        };
+
+        micButton.addEventListener("click", function() {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+                isRecording = true;
+                recordingStatus.style.display = 'block';
+                recordingTimeout = setTimeout(function() {
+                    recognition.stop();
+                }, 10000); // 10초 후에 자동으로 녹음 중지
+            }
+        });
+
+        // TTS 기능
+        async function speak(text) {
+            const response = await fetch('{{ url_for('main.tts')}}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: text })
+            });
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.play();
+        }
+
+        // 가장 최근의 시스템 메시지를 음성으로 읽어줌
+        function readLastSystemMessage() {
+            var messages = document.querySelectorAll('.message.system p');
+            if (messages.length > 0) {
+                var lastMessage = messages[messages.length - 1];
+                speak(lastMessage.textContent);
+            }
+        }
+
+        readLastSystemMessage(); // 페이지 로드 시 가장 최근 시스템 메시지를 읽어줌
+    </script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>보호자용 생각 문제 결과 보기</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <script defer src="static/js/main_result.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .home-button {
+            background-color: #fff; /* 배경색을 흰색으로 설정 */
+            display: inline-block;
+        }
+
+        .home-button img {
+            height: 40px; /* 적절한 크기로 조정 */
+            margin-left: -20px;
+            margin-top: -10px;
+        }
+
+        .home-button:hover {
+            background-color: #fff; /* 마우스를 올렸을 때도 배경색을 흰색으로 설정 */
+        }
+    </style>
+</head>
+<body onload="loadResultsData()">
+    <main>
+        <header>
+            <a href="/guardian_main" class="home-button">
+                <img src="static/images/back.png" alt="처음으로">
+            </a>
+            <h1>보호자용<br> 생각 문제 결과 보기</h1>
+        </header>
+        <section class="summary">
+            <p><span id="ward-username"></span>님은 지금까지<br> 총 <strong><span id="total-questions"></span></strong>문제 중 <strong><span id="correct-answers"></span></strong>개 맞히셨네요 :D</p>
+            <div class="progress-circles">
+                <div class="circle">
+                    <svg>
+                        <circle cx="50" cy="50" r="45"></circle>
+                        <circle cx="50" cy="50" r="45"></circle>
+                    </svg>
+                    <div class="circle-text">정답률 <span id="accuracy">0%</span></div>
+                </div>
+            </div>
+        </section>
+        <section class="details">
+            <p>이번 주는 하루에 평균 <strong><span id="average-questions-per-day"></span></strong>문제 풀었어요!</p>
+            <canvas id="weekly-questions-chart"></canvas>
+            <p>또래 중에 상위 <strong><span id="percentile"></span></strong> 수준이에요!</p>
+            <canvas id="comparison-scores-chart"></canvas>
+        </section>
+    </main>
+</body>
+</html>

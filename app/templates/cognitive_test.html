@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>생각 문제 풀기</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <style>
+        /* 스타일 추가 */
+        .home-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .home-button img {
+            height: 30px; /* 이미지 크기 조정 */
+        }
+        .result-button {
+            color: #000;
+            background-color: transparent;
+            padding: 5px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px; /* 글씨 크기 조정 */
+            font-weight: bold;
+
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <a href="javascript:history.back()" class="home-button">
+                <img src="static/images/back.png" alt="뒤로가기">
+            </a>
+            <a href="/cognitive_result" class="result-button">결과보기</a>
+            <h1>생각 문제 풀기</h1>
+        </header>
+        <section class="character">
+            <img src="static/images/character2.png" alt="새록이 캐릭터">
+        </section>
+        <section id="question-bubble" class="question-bubble hidden"></section>
+        <section id="user-response" class="user-response hidden"></section>
+        <section id="result" class="result hidden"></section>
+        <div class="buttons">
+            <button id="listen-button" class="action-button" onclick="startQuestion()">
+                <img src="static/images/speaker.png" alt="스피커 아이콘"> 문제 듣기
+            </button>
+            <button id="record-button" class="action-button" onclick="toggleRecording()">
+                <img src="static/images/microphone.png" alt="마이크 아이콘"> 버튼 누르고 대답하기
+            </button>
+        </div>
+    </main>
+    <script src="static/js/cognitive_test.js"></script>
+</body>
+</html>
